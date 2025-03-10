@@ -1,0 +1,1 @@
+This is a rewrite of [Asleum's moonsweeper](https://github.com/Asleum/moonsweeper) using different board generation logic and more modern OOP.
