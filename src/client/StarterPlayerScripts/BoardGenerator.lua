@@ -94,8 +94,6 @@ function MSmodule.flatToShapedIndices(idx, shape)
 end
 
 function MSmodule.get(arr, idx: { number })
-	-- print(arr)
-	-- print(idx)
 	for _, v in ipairs(idx) do
 		arr = arr[v]
 	end
@@ -110,8 +108,6 @@ function MSmodule.put(arr, idx: { number }, v, increment: boolean) -- numpy?? wh
 	if increment then
 		arr[idx[#idx]] += 1
 	else
-		-- print(arr)
-		-- print(idx)
 		arr[idx[#idx]] = v
 	end
 	return arr
@@ -169,7 +165,7 @@ end
 
 function MSmodule.toString(arr, out)
 	-- prints a formatted board
-	local out = out or ""
+	out = out or ""
 	if type(arr[1]) == "number" then -- reached a flat array
 		out = out .. (table.concat(arr, "\t"))
 		return out
@@ -181,6 +177,12 @@ function MSmodule.toString(arr, out)
 	return out
 end
 
+--[[
+{x, y, z}
+[shape] is ordered from highest to lowest dimension
+ex: shape = {3, 4, 5, 6} creates a 4x5x6 board cloned 3 times along the x-axis,
+representing a size of 3 in the fourth dimension
+--]]
 function MSmodule.new(shape: { number }, mines: number)
 	local size = 1
 	for _, v in ipairs(shape) do

@@ -43,6 +43,7 @@ function Board:PrepareBoard()
 	-- print(self.Board)
 
 	for idx = 1, self.totalNumTiles do
+		-- fill table with tiles
 		local shapedIdx = BoardGen.flatToShapedIndices(idx, self.Shape)
 		local cellValue = BoardGen.get(self.numberBoard, shapedIdx)
 		if cellValue >= 0 then

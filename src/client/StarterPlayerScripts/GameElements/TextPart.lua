@@ -3,7 +3,8 @@ local MouseInputsManager = require(script.Parent.Parent:WaitForChild("MouseInput
 local TextPart = {}
 TextPart.__index = TextPart
 
-function TextPart:new(size, location)
+function TextPart:new(size, location, idx)
+	idx = idx or { "hi" }
 	self = setmetatable({}, TextPart)
 
 	self.Part = Instance.new("Part")
@@ -13,6 +14,7 @@ function TextPart:new(size, location)
 	self.Part.Size = size
 	self.Part.CFrame = location
 	self.Part.Parent = game.Workspace
+	self.Part.CastShadow = false
 
 	local surfaceGui = Instance.new("SurfaceGui")
 	surfaceGui.Face = Enum.NormalId.Top
@@ -22,7 +24,7 @@ function TextPart:new(size, location)
 	self.Label.Size = UDim2.new(1, 0, 1, 0)
 	self.Label.BackgroundTransparency = 1
 	self.Label.TextScaled = true
-	self.Label.Text = ""
+	self.Label.Text = table.concat(idx, ", ")
 
 	self.Label.Parent = surfaceGui
 	surfaceGui.Parent = self.Part
