@@ -1,63 +1,86 @@
-local TextPart = require(script.Parent.TextPart)
-local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
+--!strict
 
-local Tile = setmetatable({}, TextPart)
+local TP = require(script.Parent.TextPart)
+local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
+-- local Board = require(script.Parent.Board)
+-- send tileclicked to board somehow other than using instance of board
+type TileImpl = {
+	__index: TileImpl,
+	new: (board: any, value: number, arr: { number }) -> Tile,
+	Activate: (self: Tile) -> (),
+	Reveal: (self: Tile) -> (),
+	ToggleFlag: (self: Tile) -> (),
+}
+
+type TextPartType = TP.TextPart
+
+export type Tile = typeof(setmetatable(
+	{} :: { TextPart: TextPartType, Activated: boolean, Board: any, Value: number, Idx: { number }, Flagged: boolean },
+	{} :: TileImpl
+))
+
+local Tile: TileImpl = {} :: TileImpl
 Tile.__index = Tile
 
-function Tile:new(board, value, idx)
+function Tile.new(board, value, arr)
+	local self = setmetatable({}, Tile) :: Tile
 	local TILE_CUBE_SIZE = 5
-	local absPos = Vector3.new() -- x, y, z THEY ARE DIFFERENTTTTTTTT	ignore
-	local accumulator = Vector3.new(1, 1, 1)
+	-- local absPos = Vector3.new()
+	-- local accumulator = Vector3.new(1, 1, 1)
+	--[[
+		5, 6, 1, 2, 3	shape
+		x, y, x, y, z 
+		1, 4, 1, 1, 2	index
 
-	-- 5, 6, 1, 2, 3
-	-- x, y, x, y, z
-	-- 1, 4, 1, 1, 2
-	for i = #idx, 1, -1 do
-		local relativeIdx = (i - 1) % 3 + 1
-		local backwardsIdx = #idx - i + 1
-		-- print(i)
-		-- print(relativeIdx, backwardsIdx)
-		-- print(idx)
-		local shape = board.Shape
-		if relativeIdx == 1 then -- x
-			-- TODO: refactor
-			if backwardsIdx <= 3 then
-				-- last three vals in [idx] are local pos in each 3d "chunk"
-				absPos += Vector3.new(idx[i], 0, 0)
-			else
-				accumulator *= Vector3.new(shape[i + 3], 1, 1)
-				absPos += Vector3.new(idx[i] * (accumulator.X + 1), 0, 0)
+		BoardGenerator was written with x and y as the ground plane, and z as the vertical axis
+		However, Roblox uses y for vertical, so we swap the y and z values
+	]]
+	local function buildTriples(input: { number }): { { number } }
+		-- {x3, y3, x2, y2, z2, x1, y1, z1} to
+		-- {{x1, y1, z1}, {x2, y2, z2}, {x3, y3}}
+		local triple = { 0, 0, 0 }
+		local tripleGroups = {}
+		for i = #input, 1, -1 do
+			table.insert(triple, 1, input[i])
+			if #triple == 3 or i == 1 then
+				table.insert(tripleGroups, 1, triple)
+				triple = {}
 			end
-		elseif relativeIdx == 3 then
-			if backwardsIdx <= 3 then
-				-- last three vals in [idx] are local pos in each 3d "chunk"
-				absPos += Vector3.new(0, idx[i], 0)
-			else
-				accumulator *= Vector3.new(1, shape[i + 3], 1)
-				absPos += Vector3.new(0, idx[i] * (accumulator.Y + 1), 0)
+		end
+		return tripleGroups
+	end
+
+	local xyzGroups = buildTriples(arr)
+	local shapeGroups = buildTriples(board.Shape)
+	local arrBoardPosition = { 0, 0, 0 }
+	local accumulator = { 1, 1, 1 }
+
+	for i = 1, #arr do
+		local level = (i + 2 - (i - 1) % 3) / 3 -- floor divison + offset
+		local xyz = xyzGroups[level]
+		if level == 1 then
+			for j, v in ipairs(xyz) do
+				arrBoardPosition[j] += (v - 1)
 			end
 		else
-			if backwardsIdx <= 3 then
-				-- last three vals in [idx] are local pos in each 3d "chunk"
-				absPos += Vector3.new(0, 0, idx[i])
-			else
-				accumulator *= Vector3.new(1, 1, shape[i + 3])
-				absPos += Vector3.new(0, 0, idx[i] * (accumulator.Z + 1))
+			local shape = shapeGroups[level - 1]
+			for k, v in ipairs(shape) do
+				-- print(k)
+				accumulator[k] *= v
+				arrBoardPosition[k] += xyz[k] * accumulator[k]
 			end
 		end
 	end
 
-	self = TextPart:new(
-		Vector3.new(4.5, 2, 4.5),
-		CFrame.new(board.Position + absPos * TILE_CUBE_SIZE), -- x, z, y FROM THISSSSS 	ignore
-		idx
-	)
-	setmetatable(self, Tile)
+	local vector3BoardPosition = Vector3.new(arrBoardPosition[1], arrBoardPosition[3], arrBoardPosition[2]) -- SWAP Y AND Z
+
+	self.TextPart = TP.new(Vector3.new(4.5, 2, 4.5), CFrame.new(board.Position + vector3BoardPosition * TILE_CUBE_SIZE))
 	self.Activated = false
 	self.Board = board
 	self.Value = value
-	self.Idx = idx
-	self:RegisterClick(function()
+	self.Idx = arr
+	self.Flagged = false
+	self.TextPart:RegisterClick(function()
 		self:Activate()
 	end, function()
 		self:ToggleFlag()
@@ -71,15 +94,15 @@ function Tile:Activate()
 		return
 	end
 	self.Activated = true
-	self:UnregisterClick()
+	self.TextPart:UnregisterClick()
 	return self:Reveal()
 end
 
 function Tile:Reveal()
-	self.Part.BrickColor = BrickColor.new("Light stone grey")
+	self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
 	if self.Value == 0 then
-		self.Part.Transparency = 1
-		self.Part.CanCollide = false
+		self.TextPart.Part.Transparency = 1
+		self.TextPart.Part.CanCollide = false
 		local nearbyTiles = BoardGen.indexNearbyTiles(self.Idx, self.Board.Shape)
 		for _, tile in ipairs(nearbyTiles) do
 			-- all nearby tiles must not be mines because curr is 0
@@ -87,21 +110,21 @@ function Tile:Reveal()
 			BoardGen.get(self.Board.Tiles, tile):Activate()
 		end
 	else
-		self.Label.Text = self.Value
-		self.Label.TextColor3 = Color3.fromHSV(self.Value / 8, 1, 0.75)
+		self.TextPart.Label.Text = tostring(self.Value)
+		self.TextPart.Label.TextColor3 = Color3.fromHSV(self.Value / 8, 1, 0.75)
 	end
 end
 
 function Tile:ToggleFlag()
 	self.Flagged = not self.Flagged
 	if self.Flagged then
-		self.Label.Text = "*Flag*"
+		self.TextPart.Label.Text = "*Flag*"
 		self.Board.FlagsCount = self.Board.FlagsCount + 1
 	else
-		self.Label.Text = ""
+		self.TextPart.Label.Text = ""
 		self.Board.FlagsCount = self.Board.FlagsCount - 1
 	end
 	return self.Board:UpdateMinesCounter()
 end
-
+-- pass a function to Tile to update mines counter instead of the entire board
 return Tile
