@@ -1,26 +1,28 @@
+--!strict
+
 local MSmodule = {}
 
-function MSmodule.rSample(n: number, max: number): { number }?
+function MSmodule.placeMines(arr: { number }, numMines: number, mineVal: number): { number }
 	-- n unique random ints from 1 to range
-	if n > max then -- check for bad input
-		error(string.format("%d random ints out of bounds for range %d", n, max))
-		return nil
+	local max = #arr
+	if numMines > max then -- check for bad input
+		error(string.format("%d random ints out of bounds for range %d", numMines, max))
 	end
 
+	local indices = {}
 	math.randomseed(os.time())
-	local out = {}
-	for _ = 1, n do
+	for _ = 1, numMines do
 		local try = math.random(1, max)
-		while out[try] do
+		while arr[try] == mineVal do
 			try = math.random(1, max)
 		end
-		out[try] = try
+		arr[try] = mineVal
+		table.insert(indices, try)
 	end
-	return out
+	return indices
 end
 
-function MSmodule.zeros(shape)
-	-- gave up on strict type checking here
+function MSmodule.zeros(shape: { number }): any -- returns nD array
 	-- initializes an nD array of zeros of correct shape
 	if #shape == 1 then
 		local cols = shape[1]
@@ -45,28 +47,7 @@ function MSmodule.zeros(shape)
 	end
 end
 
-function MSmodule.empty(shape)
-	-- gave up on strict type checking here
-	-- initializes an nD array of zeros of correct shape
-	if #shape == 1 then
-		return {}
-	else
-		-- recursive case
-		local tmp = {}
-		local shapeTmp = {} -- all except first element of [shape]
-		for i = 2, #shape do
-			table.insert(shapeTmp, shape[i])
-		end
-
-		local outer = shape[1]
-		for _ = 1, outer do
-			table.insert(tmp, MSmodule.empty(shapeTmp))
-		end
-		return tmp
-	end
-end
-
-function MSmodule.flatToShapedIndices(idx, shape)
+function MSmodule.flatToNDIndex(idx: number, shape: { number }): { number }
 	-- converts flat index to nD index in an array of shape shape
 	local out = {}
 	local shapeArr = {}
@@ -93,36 +74,40 @@ function MSmodule.flatToShapedIndices(idx, shape)
 	return out
 end
 
-function MSmodule.get(arr, idx: { number })
-	for _, v in ipairs(idx) do
-		arr = arr[v]
+function MSmodule.nDToFlatIndex(idx: { number }, shape: { number }): number
+	local flatIdx = 0
+	for i, v in ipairs(idx) do
+		local accumulator = v - 1
+		for j = i + 1, #shape do
+			accumulator *= shape[j]
+		end
+		flatIdx += accumulator
 	end
-	return arr
+	return flatIdx + 1 -- lua tables start at 1
 end
 
-function MSmodule.put(arr, idx: { number }, v, increment: boolean) -- numpy?? who???
+function MSmodule.put(a: any, ind: { number }, v: number, increment: boolean) -- numpy?? who???
 	-- accepts ONE index of ONE mine/thing
-	for j = 1, (#idx - 1) do
-		arr = arr[idx[j]]
+	for j = 1, (#ind - 1) do
+		a = a[ind[j]]
 	end
 	if increment then
-		arr[idx[#idx]] += 1
+		a[ind[#ind]] += 1
 	else
-		arr[idx[#idx]] = v
+		a[ind[#ind]] = v
 	end
-	return arr
 end
 
-function MSmodule.TableConcat(t1, t2)
+function MSmodule.TableConcat(t1: { number }, t2: { number }): { number }
 	for i = 1, #t2 do
 		t1[#t1 + 1] = t2[i]
 	end
 	return t1
 end
 
-function MSmodule.indexNearbyTiles(idx, shape)
+function MSmodule.indexNearbyTiles(idx: { number }, shape: { number })
 	-- gets indices of tiles around one mine
-	local dim = idx[1]
+	local dim = idx[1] -- highest dimension
 	local transform = { -1, 0, 1 }
 	local min, max = 1, shape[1]
 	local out = {}
@@ -163,11 +148,11 @@ function MSmodule.indexNearbyTiles(idx, shape)
 	end
 end
 
-function MSmodule.toString(arr, out)
+function MSmodule.toString(arr: { any }, out: any): string
 	-- prints a formatted board
 	out = out or ""
 	if type(arr[1]) == "number" then -- reached a flat array
-		out = out .. (table.concat(arr, "\t"))
+		out ..= (table.concat(arr, "\t"))
 		return out
 	else
 		for _, v in ipairs(arr) do
@@ -177,40 +162,30 @@ function MSmodule.toString(arr, out)
 	return out
 end
 
---[[
-{x, y, z}
-[shape] is ordered from highest to lowest dimension
-ex: shape = {3, 4, 5, 6} creates a 4x5x6 board cloned 3 times along the x-axis,
-representing a size of 3 in the fourth dimension
---]]
-function MSmodule.new(shape: { number }, mines: number)
+function MSmodule.new(shape: { number }, mines: number): { number }
 	local size = 1
 	for _, v in ipairs(shape) do
 		size *= v
 	end
-	local board = MSmodule.zeros(shape)
-	local mineIndices = MSmodule.rSample(mines, size) -- 1D list of indices
-	local mineMin = -(3 ^ #shape)
-	local shapedMineIndices = {}
-
-	for _, idx in pairs(mineIndices) do
-		table.insert(shapedMineIndices, MSmodule.flatToShapedIndices(idx, shape))
+	local mineVal = -(3 ^ #shape) -- mines can get incremented as well, so we set them to -(highest_possible_tile + 1) so they stay negative
+	local board = {}
+	local mineIndices = MSmodule.placeMines(board, mines, mineVal)
+	local nDMineIndices: { { number } } = {} -- for getting nearby tiles
+	-- we convert flat indices to nD indices to find the indices of nearby tiles more easily
+	-- then convert back
+	for _, idx in mineIndices do
+		table.insert(nDMineIndices, MSmodule.flatToNDIndex(idx, shape))
 	end
-
 	local aroundMines = {}
-	for _, idx in pairs(shapedMineIndices) do
-		table.insert(aroundMines, MSmodule.indexNearbyTiles(idx, shape))
-	end
-
-	for _, v in ipairs(shapedMineIndices) do
-		MSmodule.put(board, v, mineMin, false)
-	end
-
-	for _, eachMine in ipairs(aroundMines) do
-		for _, tile in ipairs(eachMine) do
-			MSmodule.put(board, tile, 0, true)
+	for _, idx in nDMineIndices do
+		for _, nearby in MSmodule.indexNearbyTiles(idx, shape) do
+			table.insert(aroundMines, MSmodule.nDToFlatIndex(nearby, shape))
 		end
 	end
+	for _, idx in ipairs(aroundMines) do
+		board[idx] += 1
+	end
+
 	return board
 end
 
