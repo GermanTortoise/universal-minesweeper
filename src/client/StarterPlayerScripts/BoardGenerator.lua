@@ -168,7 +168,7 @@ function MSmodule.new(shape: { number }, mines: number): { number }
 		size *= v
 	end
 	local mineVal = -(3 ^ #shape) -- mines can get incremented as well, so we set them to -(highest_possible_tile + 1) so they stay negative
-	local board = {}
+	local board = MSmodule.zeros({ size })
 	local mineIndices = MSmodule.placeMines(board, mines, mineVal)
 	local nDMineIndices: { { number } } = {} -- for getting nearby tiles
 	-- we convert flat indices to nD indices to find the indices of nearby tiles more easily
