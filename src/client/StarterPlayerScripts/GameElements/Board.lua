@@ -1,7 +1,6 @@
 --!strict
 
 local Tile = require(script.Parent:WaitForChild("Tile"))
-local Mine = require(script.Parent:WaitForChild("Mine"))
 local TextPart = require(script.Parent:WaitForChild("TextPart"))
 local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
 local Types = require(script.Parent.Parent:WaitForChild("Types"))
@@ -20,7 +19,7 @@ function Board.new(shape, numMines, position)
 	self.GameEnded = false
 	self.CorrectlyFlaggedMines = 0
 	self.FlagsCount = 0
-	self.Tiles = {} :: { Types.Tile | Types.Mine }
+	self.Tiles = {} :: { Types.Tile }
 	self.totalNumTiles = 1
 	for _, v in ipairs(self.Shape) do
 		self.totalNumTiles *= v
@@ -43,14 +42,8 @@ function Board.new(shape, numMines, position)
 end
 
 function Board:PrepareBoard()
-	-- print("self board")
-	-- print(self.Board)
 	for i, v in ipairs(self.NumberBoard) do
-		if v >= 0 then
-			self.Tiles[i] = Tile.new(self, v, BoardGen.flatToNDIndex(i, self.Shape))
-		else
-			self.Tiles[i] = Mine.new(self, BoardGen.flatToNDIndex(i, self.Shape))
-		end
+		self.Tiles[i] = Tile.new(self, v, BoardGen.flatToNDIndex(i, self.Shape))
 	end
 	self:UpdateMinesCounter()
 end
@@ -68,21 +61,13 @@ function Board:ResetGame()
 end
 
 function Board:EndGame(revealMines)
-	revealMines = revealMines or true
+	local revealMinesNotNull = revealMines or true
 	if self.GameEnded then
 		return
 	end
 	self.GameEnded = true
-	-- self.Tiles: {Tile | Mine}
-	for idx, cell in self.Tiles do
-		if self.NumberBoard[idx] >= 0 then
-			-- positives are tiles
-			local tile = cell :: Types.Tile
-			tile:Activate()
-		elseif revealMines then
-			local mine = cell :: Types.Mine
-			mine:Reveal()
-		end
+	for _, tile in self.Tiles do
+		tile:Reveal(revealMinesNotNull)
 	end
 end
 

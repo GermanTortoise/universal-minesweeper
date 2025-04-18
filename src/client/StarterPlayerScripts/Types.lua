@@ -5,7 +5,7 @@ local Types = {}
 export type TextPartImpl = {
 	__index: TextPartImpl,
 	new: (size: Vector3, location: CFrame) -> TextPart,
-	RegisterClick: (self: TextPart, leftClickCallBack: () -> (), rightClickCallBack: () -> ()) -> (),
+	RegisterClick: (self: TextPart, leftClickCallBack: () -> ()?, rightClickCallBack: () -> ()) -> (),
 	UnregisterClick: (self: TextPart) -> (),
 	Destroy: (self: TextPart) -> (),
 }
@@ -16,25 +16,20 @@ export type TileImpl = {
 	__index: TileImpl,
 	new: (board: Board, value: number, arr: { number }) -> Tile,
 	Activate: (self: Tile) -> (),
-	Reveal: (self: Tile) -> (),
-	ToggleFlag: (self: Tile) -> (),
+	Reveal: (self: Tile, revealMines: boolean) -> (),
+	ToggleFlag: (self: Tile) -> boolean,
 }
 
 export type Tile = typeof(setmetatable(
-	{} :: { TextPart: TextPart, Activated: boolean, Board: Board, Value: number, Idx: { number }, Flagged: boolean },
+	{} :: {
+		TextPart: TextPart,
+		Activated: boolean,
+		Board: Board,
+		Value: number,
+		Idx: { number },
+		Flagged: boolean,
+	},
 	{} :: TileImpl
-))
-
-export type MineImpl = {
-	__index: MineImpl,
-	new: (board: Board, idx: { number }) -> Mine,
-	Reveal: (self: Mine) -> (),
-	ToggleFlag: (self: Mine) -> (),
-}
-
-export type Mine = typeof(setmetatable(
-	{} :: { TextPart: TextPart, Flagged: boolean, Board: Board, Idx: { number } },
-	{} :: MineImpl
 ))
 
 export type BoardImpl = {
@@ -57,7 +52,7 @@ export type Board = typeof(setmetatable(
 		GameEnded: boolean,
 		CorrectlyFlaggedMines: number,
 		FlagsCount: number,
-		Tiles: { Tile | Mine },
+		Tiles: { Tile },
 		totalNumTiles: number,
 		Resetter: TextPart,
 		MinesCounter: TextPart,
