@@ -1,3 +1,5 @@
+--!strict
+
 local MouseInputsManager = {}
 
 local LeftClickHandlers = {}
@@ -27,7 +29,7 @@ function MouseInputsManager.initialize()
 	Mouse.Move:Connect(MouseInputsManager.UpdateSelectionBox)
 end
 
-function MouseInputsManager.BindPartToClick(part, leftClickCallback, rightClickCallback)
+function MouseInputsManager.BindPartToClick(part: BasePart, leftClickCallback: () -> (), rightClickCallback: () -> ())
 	LeftClickHandlers[part] = leftClickCallback
 	RightClickHandlers[part] = rightClickCallback
 	return MouseInputsManager.UpdateSelectionBox()

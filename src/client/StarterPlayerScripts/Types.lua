@@ -5,7 +5,7 @@ local Types = {}
 export type TextPartImpl = {
 	__index: TextPartImpl,
 	new: (size: Vector3, location: CFrame) -> TextPart,
-	RegisterClick: (self: TextPart, leftClickCallBack: () -> ()?, rightClickCallBack: () -> ()) -> (),
+	RegisterClick: (self: TextPart, leftClickCallBack: () -> (), rightClickCallBack: () -> ()) -> (),
 	UnregisterClick: (self: TextPart) -> (),
 	Destroy: (self: TextPart) -> (),
 }
@@ -16,7 +16,7 @@ export type TileImpl = {
 	__index: TileImpl,
 	new: (board: Board, value: number, arr: { number }) -> Tile,
 	Activate: (self: Tile) -> (),
-	Reveal: (self: Tile, revealMines: boolean) -> (),
+	Reveal: (self: Tile, revealMines: boolean?) -> (),
 	ToggleFlag: (self: Tile) -> boolean,
 }
 
@@ -37,7 +37,7 @@ export type BoardImpl = {
 	new: (shape: { number }, numMines: number, position: Vector3) -> Board,
 	PrepareBoard: (self: Board) -> (),
 	ResetGame: (self: Board) -> (),
-	EndGame: (self: Board, revealMines: boolean?) -> (),
+	EndGame: (self: Board, revealMines: boolean) -> (),
 	UpdateMinesCounter: (self: Board) -> (),
 	CheckVictory: (self: Board) -> (),
 }

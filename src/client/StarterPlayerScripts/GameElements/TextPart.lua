@@ -26,7 +26,6 @@ function TextPart.new(size, location)
 	self.Label = Instance.new("TextLabel")
 	self.Label.Size = UDim2.new(1, 0, 1, 0)
 	self.Label.BackgroundTransparency = 1
-	-- self.Label.Rotation = 90
 	self.Label.TextScaled = true
 	self.Label.Text = ""
 

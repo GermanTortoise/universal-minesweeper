@@ -4,6 +4,7 @@ local Tile = require(script.Parent:WaitForChild("Tile"))
 local TextPart = require(script.Parent:WaitForChild("TextPart"))
 local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
 local Types = require(script.Parent.Parent:WaitForChild("Types"))
+local MouseInputsManager = require(script.Parent.Parent:WaitForChild("MouseInputsManager"))
 
 type TileType = Types.Tile
 type BoardType = Types.BoardImpl
@@ -42,6 +43,7 @@ function Board.new(shape, numMines, position)
 end
 
 function Board:PrepareBoard()
+	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
 	for i, v in ipairs(self.NumberBoard) do
 		self.Tiles[i] = Tile.new(self, v, BoardGen.flatToNDIndex(i, self.Shape))
 	end
@@ -61,13 +63,14 @@ function Board:ResetGame()
 end
 
 function Board:EndGame(revealMines)
-	local revealMinesNotNull = revealMines or true
+	-- default to false
+	revealMines = revealMines or (revealMines == nil and false)
 	if self.GameEnded then
 		return
 	end
 	self.GameEnded = true
 	for _, tile in self.Tiles do
-		tile:Reveal(revealMinesNotNull)
+		tile:Reveal(revealMines)
 	end
 end
 

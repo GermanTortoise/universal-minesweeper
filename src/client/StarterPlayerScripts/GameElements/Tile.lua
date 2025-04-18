@@ -59,6 +59,7 @@ function Tile.new(board, value, nDIdx)
 	end, function()
 		self:ToggleFlag()
 	end)
+	self.TextPart.Label.Rotation = 90
 	return self
 end
 
@@ -68,18 +69,8 @@ function Tile:Activate()
 		return
 	end
 	self.Activated = true
-	self.TextPart:UnregisterClick()
-	if self.Value < 0 then
-		self.Board:EndGame()
-	end
-	return self:Reveal(true)
-end
-
-function Tile:Reveal(revealMines)
-	self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
+	self:Reveal(true)
 	if self.Value == 0 then
-		self.TextPart.Part.Transparency = 1
-		self.TextPart.Part.CanCollide = false
 		local nearbyTiles = BoardGen.indexNearbyTiles(self.Idx, self.Board.Shape)
 		for _, idx in nearbyTiles do
 			-- all nearby tiles must be safe because curr is 0
@@ -87,7 +78,19 @@ function Tile:Reveal(revealMines)
 			local tile = self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)] :: Types.Tile
 			tile:Activate()
 		end
+	elseif self.Value < 0 then
+		self.Board:EndGame(true)
+	end
+	-- return self:Reveal(true)
+end
+
+function Tile:Reveal(revealMines)
+	self.TextPart:UnregisterClick()
+	if self.Value == 0 then
+		self.TextPart.Part.Transparency = 1
+		self.TextPart.Part.CanCollide = false
 	elseif self.Value > 0 then
+		self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
 		self.TextPart.Label.Text = tostring(self.Value)
 		self.TextPart.Label.TextColor3 = Color3.fromHSV(self.Value / 8, 1, 0.75)
 	elseif revealMines then
