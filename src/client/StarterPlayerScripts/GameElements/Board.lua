@@ -18,7 +18,7 @@ function Board.new(shape, numMines, position)
 	self.Mines = numMines
 	self.Position = position
 	self.GameEnded = false
-	self.CorrectlyFlaggedMines = 0
+	-- self.CorrectlyFlaggedMines = 0
 	self.FlagsCount = 0
 	self.Tiles = {} :: { Types.Tile }
 	self.totalNumTiles = 1
@@ -58,13 +58,12 @@ function Board:ResetGame()
 	self.Tiles = {}
 	self.GameEnded = false
 	self.FlagsCount = 0
-	self.CorrectlyFlaggedMines = 0
+	-- self.CorrectlyFlaggedMines = 0
 	self:PrepareBoard()
 end
 
 function Board:EndGame(revealMines)
-	-- default to false
-	revealMines = revealMines or (revealMines == nil and false)
+	revealMines = revealMines or false
 	if self.GameEnded then
 		return
 	end
@@ -79,7 +78,13 @@ function Board:UpdateMinesCounter()
 end
 
 function Board:CheckVictory()
-	if self.CorrectlyFlaggedMines == self.Mines then
+	local activated = 0
+	for _, tile in self.Tiles do
+		if tile.Activated then
+			activated += 1
+		end
+	end
+	if activated == self.totalNumTiles - self.Mines then
 		self:EndGame(false)
 		self.MinesCounter.Label.Text = "You won!"
 	end

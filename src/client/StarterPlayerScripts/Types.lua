@@ -18,6 +18,10 @@ export type TileImpl = {
 	Activate: (self: Tile) -> (),
 	Reveal: (self: Tile, revealMines: boolean?) -> (),
 	ToggleFlag: (self: Tile) -> boolean,
+	_canHide: (self: Tile) -> boolean,
+	_toggleHiddenTiles: (self: Tile) -> (),
+	_show: (self: Tile) -> (),
+	_hide: (self: Tile) -> (),
 }
 
 export type Tile = typeof(setmetatable(
@@ -50,7 +54,7 @@ export type Board = typeof(setmetatable(
 		Mines: number,
 		Position: Vector3,
 		GameEnded: boolean,
-		CorrectlyFlaggedMines: number,
+		-- CorrectlyFlaggedMines: number,
 		FlagsCount: number,
 		Tiles: { Tile },
 		totalNumTiles: number,
