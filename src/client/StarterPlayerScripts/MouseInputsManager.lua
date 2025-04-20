@@ -9,6 +9,7 @@ local UIS = game:GetService("UserInputService")
 local SelectionBox = Instance.new("SelectionBox")
 SelectionBox.Color3 = Color3.new()
 SelectionBox.Parent = game.Players.LocalPlayer.PlayerGui
+local HiddenParts = Instance.new("Folder")
 
 function MouseInputsManager.initialize()
 	-- Mouse.Target must be the same part on down and up to register a click
@@ -40,6 +41,7 @@ function MouseInputsManager.initialize()
 		end
 	end)
 	Mouse.Move:Connect(MouseInputsManager.UpdateSelectionBox)
+	Mouse.TargetFilter = HiddenParts
 end
 
 function MouseInputsManager.BindPartToClick(part: BasePart, leftClickCallback: () -> (), rightClickCallback: () -> ())
@@ -60,4 +62,11 @@ function MouseInputsManager.UpdateSelectionBox()
 	end
 end
 
+function MouseInputsManager.HideFromMouse(part: BasePart)
+	part.Parent = HiddenParts
+end
+
+function MouseInputsManager.ShowToMouse(part: BasePart)
+	part.Parent = game.Workspace
+end
 return MouseInputsManager

@@ -2,6 +2,7 @@
 local TP = require(script.Parent.TextPart)
 local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
 local Types = require(script.Parent.Parent:WaitForChild("Types"))
+local MIM = require(script.Parent.Parent:WaitForChild("MouseInputsManager"))
 
 type TextPartType = Types.TextPart
 type TileType = Types.TileImpl
@@ -100,17 +101,19 @@ function Tile:Reveal(revealMines)
 		self.TextPart.Part.BrickColor = BrickColor.new("Bright red")
 	end
 end
-
+-- TODO: resolve overlapping functionality ↓↑
 function Tile:_show()
 	self.TextPart.Part.Transparency = 0
 	self.TextPart.Part.CanCollide = true
 	self.TextPart.Label.Text = tostring(self.Value)
+	MIM.ShowToMouse(self.TextPart.Part)
 end
 function Tile:_hide()
+	self.TextPart:UnregisterClick()
 	self.TextPart.Part.Transparency = 1
 	self.TextPart.Part.CanCollide = false
 	self.TextPart.Label.Text = ""
-	self.TextPart:UnregisterClick()
+	MIM.HideFromMouse(self.TextPart.Part)
 end
 
 --[[

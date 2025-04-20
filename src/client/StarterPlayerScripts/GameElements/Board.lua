@@ -4,7 +4,6 @@ local Tile = require(script.Parent:WaitForChild("Tile"))
 local TextPart = require(script.Parent:WaitForChild("TextPart"))
 local BoardGen = require(script.Parent.Parent:WaitForChild("BoardGenerator"))
 local Types = require(script.Parent.Parent:WaitForChild("Types"))
-local MouseInputsManager = require(script.Parent.Parent:WaitForChild("MouseInputsManager"))
 
 type TileType = Types.Tile
 type BoardType = Types.BoardImpl
