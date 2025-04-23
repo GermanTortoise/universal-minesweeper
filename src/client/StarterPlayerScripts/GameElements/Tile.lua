@@ -47,7 +47,7 @@ end
 function Tile.new(board, value, nDIdx)
 	local self = setmetatable({}, Tile)
 	local TILE_SPACING = 5
-	local TILE_SIZE = Vector3.new(4.5, 2, 4.5)
+	local TILE_SIZE = Vector3.new(3, 3, 3)
 	local tilePos = getBoardPosition(nDIdx, board.Shape)
 	self.TextPart = TP.new(TILE_SIZE, CFrame.new(board.Position + tilePos * TILE_SPACING))
 	self.Activated = false
@@ -55,8 +55,9 @@ function Tile.new(board, value, nDIdx)
 	self.Value = value
 	self.Idx = nDIdx
 	self.Flagged = false
+	self.NearbyTiles = {}
 	self.TextPart:RegisterClick(function()
-		self:Activate()
+		self:LeftClick()
 	end, function()
 		self:ToggleFlag()
 	end)
@@ -64,84 +65,120 @@ function Tile.new(board, value, nDIdx)
 	return self
 end
 
-function Tile:Activate()
-	-- print("clicked!")
+-- must do this after initializing all tiles
+function Tile:InitNearbyTiles()
+	local nearbyTiles = BoardGen.indexOfNearbyTiles(self.Idx, self.Board.Shape)
+	for _, idx in nearbyTiles do
+		table.insert(self.NearbyTiles, self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)])
+	end
+end
+
+function Tile:LeftClick()
+	if self.Activated then
+		self:_chord()
+	else
+		self:_activate()
+	end
+end
+
+function Tile:_chord()
+	if self:_hasCorrectNumberFlags() then
+		for _, tile in self.NearbyTiles do
+			if not tile.Flagged then
+				tile:_activate()
+			end
+		end
+	end
+end
+
+-- on first left click
+function Tile:_activate()
+	-- debugging
+	-- self.TextPart.Part.BrickColor = BrickColor.new("Lime green")
+	-- wait(0.5)
+	-- self.TextPart.Part.BrickColor = BrickColor.new("Medium stone grey")
+	-- TODO: figure out revealing 0's when there are misplaced flags
 	if self.Activated or self.Flagged then
 		return
 	end
 	self.Activated = true
 	self:Reveal(true)
-	self.Board:CheckVictory()
-	self:_toggleHiddenTiles()
 	if self.Value == 0 then
-		local nearbyTiles = BoardGen.indexNearbyTiles(self.Idx, self.Board.Shape)
-		for _, idx in nearbyTiles do
-			-- all nearby tiles must be safe because curr is 0
-			-- so no need to check for mines
-			local tile = self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)] :: Types.Tile
-			tile:Activate()
+		for _, tile in self.NearbyTiles do
+			tile:_activate()
 		end
 	elseif self.Value < 0 then
 		self.Board:EndGame(true)
 	end
+	self:_toggleHiddenTiles()
+	self.Board:CheckVictory()
 end
 
 function Tile:Reveal(revealMines)
-	self.TextPart:UnregisterClick()
 	if self.Value == 0 then
+		self.TextPart:UnregisterClick()
 		self:_hide()
 	elseif self.Value > 0 then
-		self:_show()
-		self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
 		self.TextPart.Label.Text = tostring(self.Value)
+		self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
 		self.TextPart.Label.TextColor3 = Color3.fromHSV(self.Value / 8, 1, 0.75)
 	elseif revealMines then
-		self:_show()
+		self.TextPart.Label.Text = tostring(self.Value)
 		self.TextPart.Label.Text = "X"
 		self.TextPart.Part.BrickColor = BrickColor.new("Bright red")
 	end
 end
--- TODO: resolve overlapping functionality ↓↑
+
 function Tile:_show()
 	self.TextPart.Part.Transparency = 0
 	self.TextPart.Part.CanCollide = true
 	self.TextPart.Label.Text = tostring(self.Value)
 	MIM.ShowToMouse(self.TextPart.Part)
 end
+
 function Tile:_hide()
-	self.TextPart:UnregisterClick()
 	self.TextPart.Part.Transparency = 1
 	self.TextPart.Part.CanCollide = false
 	self.TextPart.Label.Text = ""
 	MIM.HideFromMouse(self.TextPart.Part)
 end
 
+function Tile:ToggleFlag()
+	if self.Activated then
+		return false
+	end
+	self.Flagged = not self.Flagged
+	if self.Flagged then
+		self.TextPart.Label.Text = "*Flag*"
+		self.Board.FlagsCount += 1
+	else
+		self.TextPart.Label.Text = ""
+		self.Board.FlagsCount -= 1
+	end
+	self.Board:UpdateMinesCounter()
+	self:_toggleHiddenTiles()
+	return not self.Flagged
+end
+
 --[[
 Checks if this tile no longer provides information about nearby mines. \
 Requirements:\
 Has correct number of flags nearby, \
-All nearby tiles are either revealed or flags
+All nearby tiles are either activated or flags
 ]]
 function Tile:_canHide()
-	local nearbyTiles = BoardGen.indexNearbyTiles(self.Idx, self.Board.Shape)
-	local nearbyFlags = 0
-	for _, idx in nearbyTiles do
-		local tile = self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)]
-		if tile.Flagged then
-			nearbyFlags += 1
-		end
+	for _, tile in self.NearbyTiles do
 		if not tile.Activated and not tile.Flagged then
 			return false
 		end
 	end
-	return self.Value == nearbyFlags
+	return self:_hasCorrectNumberFlags()
 end
 
 function Tile:_toggleHiddenTiles()
-	local nearbyTiles = BoardGen.indexNearbyTiles(self.Idx, self.Board.Shape)
-	for _, idx in nearbyTiles do
-		local tile = self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)]
-		if tile.Value >= 0 and tile.Activated then
+	for _, tile in self.NearbyTiles do
+		-- ignore zeros, they are always hidden
+		if tile.Value > 0 and tile.Activated then
 			if tile:_canHide() then
 				tile:_hide()
 			else
@@ -151,25 +188,14 @@ function Tile:_toggleHiddenTiles()
 	end
 end
 
-function Tile:ToggleFlag()
-	self.Flagged = not self.Flagged
-	if self.Flagged then
-		self.TextPart.Label.Text = "*Flag*"
-		self.Board.FlagsCount += 1
-		if self.Value < 0 then
-			-- self.Board.CorrectlyFlaggedMines += 1
-			self:_toggleHiddenTiles()
-		end
-	else
-		self.TextPart.Label.Text = ""
-		self.Board.FlagsCount -= 1
-		if self.Value < 0 then
-			-- self.Board.CorrectlyFlaggedMines -= 1
-			self:_toggleHiddenTiles()
+function Tile:_hasCorrectNumberFlags()
+	local nearbyFlags = 0
+	for _, tile in self.NearbyTiles do
+		if tile.Flagged then
+			nearbyFlags += 1
 		end
 	end
-	self.Board:UpdateMinesCounter()
-	return not self.Flagged
+	return self.Value == nearbyFlags
 end
 
 return Tile

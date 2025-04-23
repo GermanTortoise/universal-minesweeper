@@ -64,7 +64,7 @@ function MSmodule.flatToNDIndex(idx: number, shape: { number }): { number }
 		tmp = 1
 	end
 
-	for j, v2 in pairs(shapeArr) do
+	for j, v2 in shapeArr do
 		out[j] = math.ceil(idx / v2)
 		idx = idx % v2
 		if idx == 0 then
@@ -76,7 +76,7 @@ end
 
 function MSmodule.nDToFlatIndex(idx: { number }, shape: { number }): number
 	local flatIdx = 0
-	for i, v in ipairs(idx) do
+	for i, v in idx do
 		local accumulator = v - 1
 		for j = i + 1, #shape do
 			accumulator *= shape[j]
@@ -105,7 +105,7 @@ function MSmodule.TableConcat(t1: { number }, t2: { number }): { number }
 	return t1
 end
 
-function MSmodule.indexNearbyTiles(idx: { number }, shape: { number })
+function MSmodule.indexOfNearbyTiles(idx: { number }, shape: { number })
 	-- gets indices of tiles around one mine
 	local dim = idx[1] -- highest dimension
 	local transform = { -1, 0, 1 }
@@ -121,25 +121,25 @@ function MSmodule.indexNearbyTiles(idx: { number }, shape: { number })
 		return out
 	else
 		local subIdx = {}
-		for i, v in ipairs(idx) do
+		for i, v in idx do
 			if i ~= 1 then
 				table.insert(subIdx, v)
 			end
 		end
 
 		local subShape = {}
-		for i, v in ipairs(shape) do
+		for i, v in shape do
 			if i ~= 1 then
 				table.insert(subShape, v)
 			end
 		end
 
-		local subDims = MSmodule.indexNearbyTiles(subIdx, subShape)
+		local subDims = MSmodule.indexOfNearbyTiles(subIdx, subShape)
 
 		for _, v in transform do
 			local tmp = dim + v
 			if min <= tmp and tmp <= max then
-				for _, subDim in pairs(subDims) do
+				for _, subDim in subDims do
 					table.insert(out, MSmodule.TableConcat({ tmp }, subDim))
 				end
 			end
@@ -155,7 +155,7 @@ function MSmodule.toString(arr: { any }, out: any): string
 		out ..= (table.concat(arr, "\t"))
 		return out
 	else
-		for _, v in ipairs(arr) do
+		for _, v in arr do
 			out = out .. ("\n" .. MSmodule.toString(v))
 		end
 	end
@@ -164,7 +164,7 @@ end
 
 function MSmodule.new(shape: { number }, mines: number): { number }
 	local size = 1
-	for _, v in ipairs(shape) do
+	for _, v in shape do
 		size *= v
 	end
 	local mineVal = -(3 ^ #shape) -- mines can get incremented as well, so we set them to -(highest_possible_tile + 1) so they stay negative
@@ -178,11 +178,11 @@ function MSmodule.new(shape: { number }, mines: number): { number }
 	end
 	local aroundMines = {}
 	for _, idx in nDMineIndices do
-		for _, nearby in MSmodule.indexNearbyTiles(idx, shape) do
+		for _, nearby in MSmodule.indexOfNearbyTiles(idx, shape) do
 			table.insert(aroundMines, MSmodule.nDToFlatIndex(nearby, shape))
 		end
 	end
-	for _, idx in ipairs(aroundMines) do
+	for _, idx in aroundMines do
 		board[idx] += 1
 	end
 

@@ -14,31 +14,32 @@ local HiddenParts = Instance.new("Folder")
 function MouseInputsManager.initialize()
 	-- Mouse.Target must be the same part on down and up to register a click
 	-- This allows for "safe" clicking (drag away to "cancel")
-	local target1 = nil
-	local target2 = nil
+	local targetL = nil
+	local targetR = nil
 	UIS.InputBegan:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			target1 = Mouse.Target
+			targetL = Mouse.Target
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			target2 = Mouse.Target
+			targetR = Mouse.Target
 		end
 	end)
 	UIS.InputEnded:Connect(function(input)
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
-			if target1 == Mouse.Target then
-				local handler = LeftClickHandlers[target1]
+			if targetL == Mouse.Target then
+				local handler = LeftClickHandlers[targetL]
 				if handler then
 					return handler()
 				end
 			end
 		elseif input.UserInputType == Enum.UserInputType.MouseButton2 then
-			if target2 == Mouse.Target then
-				local handler = RightClickHandlers[target2]
+			if targetR == Mouse.Target then
+				local handler = RightClickHandlers[targetR]
 				if handler then
 					return handler()
 				end
 			end
 		end
+		targetL, targetR = nil
 	end)
 	Mouse.Move:Connect(MouseInputsManager.UpdateSelectionBox)
 	Mouse.TargetFilter = HiddenParts

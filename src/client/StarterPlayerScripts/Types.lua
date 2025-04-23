@@ -14,14 +14,18 @@ export type TextPart = typeof(setmetatable({} :: { Part: Part, Label: TextLabel 
 
 export type TileImpl = {
 	__index: TileImpl,
-	new: (board: Board, value: number, arr: { number }) -> Tile,
-	Activate: (self: Tile) -> (),
+	new: (board: Board, value: number, nDIdx: { number }) -> Tile,
+	LeftClick: (self: Tile) -> (),
+	InitNearbyTiles: (self: Tile) -> (),
 	Reveal: (self: Tile, revealMines: boolean?) -> (),
 	ToggleFlag: (self: Tile) -> boolean,
+	_activate: (self: Tile) -> (),
+	_chord: (self: Tile) -> (),
 	_canHide: (self: Tile) -> boolean,
 	_toggleHiddenTiles: (self: Tile) -> (),
 	_show: (self: Tile) -> (),
 	_hide: (self: Tile) -> (),
+	_hasCorrectNumberFlags: (self: Tile) -> boolean,
 }
 
 export type Tile = typeof(setmetatable(
@@ -32,6 +36,7 @@ export type Tile = typeof(setmetatable(
 		Value: number,
 		Idx: { number },
 		Flagged: boolean,
+		NearbyTiles: { Tile },
 	},
 	{} :: TileImpl
 ))

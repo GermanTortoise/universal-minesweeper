@@ -17,11 +17,10 @@ function Board.new(shape, numMines, position)
 	self.Mines = numMines
 	self.Position = position
 	self.GameEnded = false
-	-- self.CorrectlyFlaggedMines = 0
 	self.FlagsCount = 0
-	self.Tiles = {} :: { Types.Tile }
+	self.Tiles = {}
 	self.totalNumTiles = 1
-	for _, v in ipairs(self.Shape) do
+	for _, v in self.Shape do
 		self.totalNumTiles *= v
 	end
 	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
@@ -43,8 +42,11 @@ end
 
 function Board:PrepareBoard()
 	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
-	for i, v in ipairs(self.NumberBoard) do
+	for i, v in self.NumberBoard do
 		self.Tiles[i] = Tile.new(self, v, BoardGen.flatToNDIndex(i, self.Shape))
+	end
+	for _, tile in self.Tiles do
+		tile:InitNearbyTiles()
 	end
 	self:UpdateMinesCounter()
 end
@@ -57,7 +59,6 @@ function Board:ResetGame()
 	self.Tiles = {}
 	self.GameEnded = false
 	self.FlagsCount = 0
-	-- self.CorrectlyFlaggedMines = 0
 	self:PrepareBoard()
 end
 
@@ -69,6 +70,7 @@ function Board:EndGame(revealMines)
 	self.GameEnded = true
 	for _, tile in self.Tiles do
 		tile:Reveal(revealMines)
+		tile.TextPart:UnregisterClick()
 	end
 end
 
