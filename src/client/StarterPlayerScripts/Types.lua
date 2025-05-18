@@ -5,7 +5,7 @@ local Types = {}
 export type TextPartImpl = {
 	__index: TextPartImpl,
 	new: (size: Vector3, location: CFrame) -> TextPart,
-	RegisterClick: (self: TextPart, leftClickCallBack: () -> (), rightClickCallBack: () -> ()) -> (),
+	RegisterClick: (self: TextPart, leftClickCallBack: () -> (), rightClickCallBack: () -> (), nearby: { Tile }?) -> (),
 	UnregisterClick: (self: TextPart) -> (),
 	Destroy: (self: TextPart) -> (),
 }
@@ -19,6 +19,7 @@ export type TileImpl = {
 	InitNearbyTiles: (self: Tile) -> (),
 	Reveal: (self: Tile, revealMines: boolean?) -> (),
 	ToggleFlag: (self: Tile) -> boolean,
+	SetHighlight: (self: Tile, status: boolean) -> (),
 	_activate: (self: Tile) -> (),
 	_chord: (self: Tile) -> (),
 	_canHide: (self: Tile) -> boolean,
@@ -37,6 +38,7 @@ export type Tile = typeof(setmetatable(
 		Idx: { number },
 		Flagged: boolean,
 		NearbyTiles: { Tile },
+		collisionBox: Part,
 	},
 	{} :: TileImpl
 ))
