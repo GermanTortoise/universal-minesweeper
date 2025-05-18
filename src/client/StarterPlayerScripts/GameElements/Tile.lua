@@ -46,21 +46,28 @@ end
 
 function Tile.new(board, value, nDIdx)
 	local self = setmetatable({}, Tile)
-	local TILE_SPACING = 5
-	local TILE_SIZE = Vector3.new(3, 3, 3)
+	local TILE_SPACING = 4
+	local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
 	local tilePos = getBoardPosition(nDIdx, board.Shape)
 	self.TextPart = TP.new(TILE_SIZE, CFrame.new(board.Position + tilePos * TILE_SPACING))
+
+	self.collisionBox = Instance.new("Part")
+	self.collisionBox.CFrame = CFrame.new(board.Position + tilePos * TILE_SPACING)
+	self.collisionBox.Anchored = true
+	self.collisionBox.Transparency = 1
+	self.collisionBox.Size = Vector3.new(4, 4, 4)
+	self.collisionBox.CanQuery = false
+	self.collisionBox.CanTouch = false
+	self.collisionBox.Parent = game.Workspace
+	self.collisionBox.CastShadow = false
+	MIM.HideFromMouse(self.collisionBox)
+
 	self.Activated = false
 	self.Board = board
 	self.Value = value
 	self.Idx = nDIdx
 	self.Flagged = false
 	self.NearbyTiles = {}
-	self.TextPart:RegisterClick(function()
-		self:LeftClick()
-	end, function()
-		self:ToggleFlag()
-	end)
 	self.TextPart.Label.Rotation = 90
 	return self
 end
@@ -71,6 +78,12 @@ function Tile:InitNearbyTiles()
 	for _, idx in nearbyTiles do
 		table.insert(self.NearbyTiles, self.Board.Tiles[BoardGen.nDToFlatIndex(idx, self.Board.Shape)])
 	end
+
+	self.TextPart:RegisterClick(function()
+		self:LeftClick()
+	end, function()
+		self:ToggleFlag()
+	end, self.NearbyTiles)
 end
 
 function Tile:LeftClick()
@@ -78,6 +91,16 @@ function Tile:LeftClick()
 		self:_chord()
 	else
 		self:_activate()
+	end
+end
+
+function Tile:SetHighlight(status)
+	if status then
+		self.TextPart.Part.BrickColor = BrickColor.new("Bright yellow")
+	elseif self.Activated then
+		self.TextPart.Part.BrickColor = BrickColor.new("Light stone grey")
+	else
+		self.TextPart.Part.BrickColor = BrickColor.new("Medium stone grey")
 	end
 end
 
@@ -133,6 +156,7 @@ function Tile:_show()
 	self.TextPart.Part.Transparency = 0
 	self.TextPart.Part.CanCollide = true
 	self.TextPart.Label.Text = tostring(self.Value)
+	self.collisionBox.CanCollide = true
 	MIM.ShowToMouse(self.TextPart.Part)
 end
 
@@ -140,6 +164,7 @@ function Tile:_hide()
 	self.TextPart.Part.Transparency = 1
 	self.TextPart.Part.CanCollide = false
 	self.TextPart.Label.Text = ""
+	self.collisionBox.CanCollide = false
 	MIM.HideFromMouse(self.TextPart.Part)
 end
 

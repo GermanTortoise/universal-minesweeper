@@ -34,8 +34,9 @@ function TextPart.new(size, location)
 	return self
 end
 
-function TextPart:RegisterClick(leftClickCallback, rightClickCallback)
-	return MouseInputsManager.BindPartToClick(self.Part, leftClickCallback, rightClickCallback)
+function TextPart:RegisterClick(leftClickCallback, rightClickCallback, nearby)
+	local Nearby = nearby or {}
+	return MouseInputsManager.BindPartToClick(self.Part, leftClickCallback, rightClickCallback, Nearby)
 end
 
 function TextPart:UnregisterClick()
