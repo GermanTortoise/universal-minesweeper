@@ -1,4 +1,4 @@
-This is a rewrite of [Asleum's Moonsweeper](https://github.com/Asleum/moonsweeper) using different board generation logic and more modern OOP.
+I started by rewriting [Asleum's Moonsweeper](https://github.com/Asleum/moonsweeper) to learn the basics of Roblox programming, and used my own board generation logic and more modern OOP.
 
 Universal Minesweeper generates Minesweeper games of any dimension.
 
