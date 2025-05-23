@@ -1,7 +1,9 @@
 --!strict
+local shared = game:GetService("ReplicatedStorage")
+local client = game:GetService("StarterPlayer")
 
-local Types = require(script.Parent.Parent:WaitForChild("Types"))
-local MouseInputsManager = require(script.Parent.Parent:WaitForChild("MouseInputsManager"))
+local Types = require(shared.Types)
+-- local MouseInputsManager = require(client.StarterPlayerScripts.MouseInputsManager)
 
 type TextPartType = Types.TextPartImpl
 
@@ -34,14 +36,14 @@ function TextPart.new(size, location)
 	return self
 end
 
-function TextPart:RegisterClick(leftClickCallback, rightClickCallback, nearby)
-	local Nearby = nearby or {}
-	return MouseInputsManager.BindPartToClick(self.Part, leftClickCallback, rightClickCallback, Nearby)
-end
+-- function TextPart:RegisterClick(leftClickCallback, rightClickCallback, nearby)
+-- 	local Nearby = nearby or {}
+-- 	return MouseInputsManager.BindPartToClick(self.Part, leftClickCallback, rightClickCallback, Nearby)
+-- end
 
-function TextPart:UnregisterClick()
-	return MouseInputsManager.UnbindPartFromClick(self.Part)
-end
+-- function TextPart:UnregisterClick()
+-- 	return MouseInputsManager.UnbindPartFromClick(self.Part)
+-- end
 
 function TextPart:Destroy()
 	self:UnregisterClick()

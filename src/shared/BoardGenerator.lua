@@ -105,13 +105,19 @@ function MSmodule.TableConcat(t1: { number }, t2: { number }): { number }
 	return t1
 end
 
-function MSmodule.indexOfNearbyTiles(idx: { number }, shape: { number })
+function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }): { { number } }
 	-- gets indices of tiles around one mine
-	local dim = idx[1] -- highest dimension
+	local ndIdx: { number }
+	if type(idx) == "number" then
+		ndIdx = MSmodule.flatToNDIndex(idx, shape)
+	else
+		ndIdx = idx
+	end
+	local dim = ndIdx[1] -- highest dimension
 	local transform = { -1, 0, 1 }
 	local min, max = 1, shape[1]
 	local out = {}
-	if #idx == 1 then
+	if #ndIdx == 1 then
 		for _, v in transform do
 			local tmp = dim + v
 			if min <= tmp and tmp <= max then
@@ -121,7 +127,7 @@ function MSmodule.indexOfNearbyTiles(idx: { number }, shape: { number })
 		return out
 	else
 		local subIdx = {}
-		for i, v in idx do
+		for i, v in ndIdx do
 			if i ~= 1 then
 				table.insert(subIdx, v)
 			end

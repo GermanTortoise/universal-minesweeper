@@ -1,7 +1,0 @@
-print("Initializing...")
-local gameElements = script.Parent:WaitForChild("GameElements")
-local Board = require(gameElements:WaitForChild("Board"))
-local MouseInputsManager = require(script.Parent:WaitForChild("MouseInputsManager"))
-MouseInputsManager.initialize()
-Board.new({ 10, 10, 10 }, 100, Vector3.new(0, 0, -50))
-return print("Ready!")

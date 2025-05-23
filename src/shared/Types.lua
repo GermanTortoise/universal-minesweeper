@@ -14,31 +14,14 @@ export type TextPart = typeof(setmetatable({} :: { Part: Part, Label: TextLabel 
 
 export type TileImpl = {
 	__index: TileImpl,
-	new: (board: Board, value: number, nDIdx: { number }) -> Tile,
-	LeftClick: (self: Tile) -> (),
-	InitNearbyTiles: (self: Tile) -> (),
-	Reveal: (self: Tile, revealMines: boolean?) -> (),
-	ToggleFlag: (self: Tile) -> boolean,
-	SetHighlight: (self: Tile, status: boolean) -> (),
-	_activate: (self: Tile) -> (),
-	_chord: (self: Tile) -> (),
-	_canHide: (self: Tile) -> boolean,
-	_toggleHiddenTiles: (self: Tile) -> (),
-	_show: (self: Tile) -> (),
-	_hide: (self: Tile) -> (),
-	_hasCorrectNumberFlags: (self: Tile) -> boolean,
+	new: () -> Tile,
 }
 
 export type Tile = typeof(setmetatable(
 	{} :: {
-		TextPart: TextPart,
 		Activated: boolean,
-		Board: Board,
-		Value: number,
-		Idx: { number },
 		Flagged: boolean,
 		NearbyTiles: { Tile },
-		collisionBox: Part,
 	},
 	{} :: TileImpl
 ))
@@ -61,7 +44,6 @@ export type Board = typeof(setmetatable(
 		Mines: number,
 		Position: Vector3,
 		GameEnded: boolean,
-		-- CorrectlyFlaggedMines: number,
 		FlagsCount: number,
 		Tiles: { Tile },
 		totalNumTiles: number,

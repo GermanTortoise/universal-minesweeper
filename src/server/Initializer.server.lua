@@ -1,0 +1,11 @@
+local shared = game:GetService("ReplicatedStorage")
+local client = game:GetService("StarterPlayer")
+local server = game:GetService("ServerScriptService")
+
+print("Initializing...")
+-- local gameElements = script.Parent:WaitForChild("GameElements")
+local Board = require(server.Board)
+local MouseInputsManager = client.StarterPlayerScripts:WaitForChild("MouseInputsManager")
+-- MouseInputsManager.initialize()
+Board.new({ 10, 10, 10 }, 100, Vector3.new(0, 0, -50))
+print("Ready!")
