@@ -1,10 +1,12 @@
+--!strict
+
 local shared = game:GetService("ReplicatedStorage")
 local client = game:GetService("StarterPlayer")
 
 local BG = require(shared.BoardGenerator)
 local TextPart = require(client.StarterPlayerScripts.TextPart)
-local BoardController = {}
-BoardController.__index = BoardController
+local Remote = require(shared.remotes)
+local Types = require(shared.Types)
 
 local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
@@ -42,21 +44,43 @@ local function getBoardRelativePos(pos: number, shape: { number }): Vector3
 	end
 	return Vector3.new(relBoardIdx[1], relBoardIdx[3], relBoardIdx[2])
 end
--- local Remote = require(shared.remotes)
--- local NewGame = Remote.getEvent("NewGame")
--- NewGame.OnClientEvent:Connect(print("e"))
-function BoardController.new(shape: { number }, boardPos: Vector3)
-	print("Reached")
-	local self = setmetatable({}, BoardController)
-	self.totalNumTiles = 1
+
+local GameController = {} :: Types.GameControllerImpl
+GameController.__index = GameController
+
+function GameController.new(shape, boardPos)
+	local self = setmetatable({}, GameController)
+	local totalNumTextParts = 1
 	for _, v in shape do
-		self.totalNumTiles *= v
+		totalNumTextParts *= v
 	end
-	self.Tiles = {}
-	for idx = 1, self.totalNumTiles, 1 do
+	self.TextParts = {}
+	for idx = 1, totalNumTextParts do
 		local tilePos = getBoardRelativePos(idx, shape)
-		self.Tiles[idx] = TextPart.new(TILE_SIZE, CFrame.new(boardPos + tilePos * TILE_SPACING))
+		self.TextParts[idx] = TextPart.new(TILE_SIZE, CFrame.new(boardPos + tilePos * TILE_SPACING), idx)
+	end
+	-- TODO: do init nearby tiles
+	local ActivateTextParts = Remote.getEvent("ActivateTextParts")
+	local ToggleFlag = Remote.getEvent("ToggleFlag")
+	ActivateTextParts.OnClientEvent:Connect(function(idxs: { { number } })
+		print(idxs)
+		self:Activate(idxs)
+	end)
+	ToggleFlag.OnClientEvent:Connect(function(idx: number, flagged: boolean)
+		self:ToggleFlag(idx, flagged)
+	end)
+end
+
+function GameController:Activate(tilesRevealed)
+	for _, tileInfo in tilesRevealed do
+		local idx = tileInfo[1]
+		local val = tileInfo[2]
+		self.TextParts[idx]:Reveal(false, val)
 	end
 end
 
-return BoardController
+function GameController:ToggleFlag(textPart, flagged)
+	self.TextParts[textPart]:ToggleFlag(flagged)
+end
+
+return GameController

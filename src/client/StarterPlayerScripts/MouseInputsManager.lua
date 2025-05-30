@@ -2,13 +2,13 @@
 local shared = game:GetService("ReplicatedStorage")
 
 local Types = require(shared.Types)
-type Tile = Types.Tile
--- local MouseInputsManager = {}
+type Tile = Types.TextPart
+local MouseInputsManager = {}
 
 local LeftClickHandlers: { [BasePart]: () -> () } = {}
 local RightClickHandlers: { [BasePart]: () -> () } = {}
-local Neighbors: { [BasePart]: { Tile } } = {}
-local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
+-- local Neighbors: { [BasePart]: { Tile } } = {}
+local Mouse = game.Players.LocalPlayer:GetMouse()
 local UIS = game:GetService("UserInputService")
 local SelectionBox = Instance.new("SelectionBox")
 SelectionBox.Color3 = Color3.new()
@@ -49,13 +49,12 @@ end)
 Mouse.TargetFilter = HiddenParts
 -- end
 
-function BindPartToClick(part: Part, leftClickCallback: () -> (), rightClickCallback: () -> (), nearby: { Tile })
+function MouseInputsManager.BindPartToClick(part: Part, leftClickCallback: () -> (), rightClickCallback: () -> ())
 	LeftClickHandlers[part] = leftClickCallback
 	RightClickHandlers[part] = rightClickCallback
-	Neighbors[part] = nearby
 	return UpdateSelectionBox()
 end
-function UnbindPartFromClick(part)
+function MouseInputsManager.UnbindPartFromClick(part)
 	LeftClickHandlers[part] = nil
 	RightClickHandlers[part] = nil
 	return UpdateSelectionBox()
@@ -74,11 +73,11 @@ function UpdateSelectionBox()
 	end
 end
 Mouse.Move:Connect(UpdateSelectionBox)
-function HideFromMouse(part: BasePart)
+function MouseInputsManager.HideFromMouse(part: BasePart)
 	part.Parent = HiddenParts
 end
 
-function ShowToMouse(part: BasePart)
+function MouseInputsManager.ShowToMouse(part: BasePart)
 	part.Parent = game.Workspace
 end
--- return MouseInputsManager
+return MouseInputsManager
