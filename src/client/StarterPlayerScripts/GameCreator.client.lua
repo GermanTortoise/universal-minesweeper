@@ -3,9 +3,9 @@ local client = game:GetService("StarterPlayer")
 local Remote = require(shared.remotes)
 
 local NewGame = Remote.getEvent("NewGame")
-local BoardController = require(client.StarterPlayerScripts.GameController)
+local GameController = require(client.StarterPlayerScripts.GameController)
 
 NewGame.OnClientEvent:Connect(function(shape, pos)
-	BoardController.new(shape, pos)
+	GameController.new(shape, pos)
 end)
--- BoardController.new({ 1, 2 }, Vector3.new(0, 0, 0))
+-- GameController.new({ 1, 2 }, Vector3.new(0, 0, 0))

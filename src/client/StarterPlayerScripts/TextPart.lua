@@ -6,6 +6,9 @@ local Types = require(shared.Types)
 local MIM = require(client.StarterPlayerScripts:WaitForChild("MouseInputsManager"))
 local Remote = require(shared.remotes)
 
+local LeftClick = Remote.getEvent("LeftClick")
+local RightClick = Remote.getEvent("RightClick")
+
 type TextPartType = Types.TextPartImpl
 
 local TextPart: TextPartType = {} :: TextPartType
@@ -37,16 +40,18 @@ function TextPart.new(size, location, idx)
 
 	self.Idx = idx
 	self.Val = nil
-	self.Activated = false
+	self.Activated = false -- should really be called revealed
 	self.Flagged = false
 	self.NearbyTiles = {}
 
-	local LeftClick = Remote.getEvent("LeftClick")
-	local RightClick = Remote.getEvent("RightClick")
 	MIM.BindPartToClick(self.Part, function()
-		LeftClick:FireServer(self.Idx)
+		if not self.Flagged then
+			LeftClick:FireServer(self.Idx)
+		end
 	end, function()
-		RightClick:FireServer(self.Idx)
+		if not self.Activated then
+			RightClick:FireServer(self.Idx)
+		end
 	end)
 
 	return self
@@ -62,6 +67,7 @@ end
 
 function TextPart:Reveal(revealMines, val)
 	self.Val = val
+	self.Activated = true
 	if self.Val == 0 then
 		self:UnregisterClick()
 		self:_hide()
@@ -74,6 +80,7 @@ function TextPart:Reveal(revealMines, val)
 		self.Label.Text = "X"
 		self.Part.BrickColor = BrickColor.new("Bright red")
 	end
+	self:_toggleHiddenTiles()
 end
 
 function TextPart:_show()
@@ -119,8 +126,8 @@ end
 
 function TextPart:_toggleHiddenTiles()
 	for _, tile in self.NearbyTiles do
-		-- ignore zeros, they are always hidden
-		if tile.Val > 0 and tile.Activated then
+		-- ignore unknown/unactivted tiles by short circuit
+		if tile.Activated and tile.Val > 0 then
 			if tile:_canHide() then
 				tile:_hide()
 			else

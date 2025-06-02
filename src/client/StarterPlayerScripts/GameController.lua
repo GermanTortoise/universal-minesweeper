@@ -1,5 +1,5 @@
 --!strict
-
+-- this can probably be a localscript
 local shared = game:GetService("ReplicatedStorage")
 local client = game:GetService("StarterPlayer")
 
@@ -10,6 +10,10 @@ local Types = require(shared.Types)
 
 local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
+
+local ActivateTextParts = Remote.getEvent("ActivateTextParts")
+local ToggleFlag = Remote.getEvent("ToggleFlag")
+local EndGame = Remote.getEvent("EndGame")
 
 local function getBoardRelativePos(pos: number, shape: { number }): Vector3
 	-- {x1, y1, z1, x2, y2, z2, x3, y3} to
@@ -60,27 +64,32 @@ function GameController.new(shape, boardPos)
 		self.TextParts[idx] = TextPart.new(TILE_SIZE, CFrame.new(boardPos + tilePos * TILE_SPACING), idx)
 	end
 	-- TODO: do init nearby tiles
-	local ActivateTextParts = Remote.getEvent("ActivateTextParts")
-	local ToggleFlag = Remote.getEvent("ToggleFlag")
-	ActivateTextParts.OnClientEvent:Connect(function(idxs: { { number } })
-		print(idxs)
-		self:Activate(idxs)
-	end)
-	ToggleFlag.OnClientEvent:Connect(function(idx: number, flagged: boolean)
-		self:ToggleFlag(idx, flagged)
-	end)
-end
-
-function GameController:Activate(tilesRevealed)
-	for _, tileInfo in tilesRevealed do
-		local idx = tileInfo[1]
-		local val = tileInfo[2]
-		self.TextParts[idx]:Reveal(false, val)
+	for _, tile in self.TextParts do
+		local nearbyTiles = BG.indexOfNearbyTiles(tile.Idx, shape)
+		for _, idx in nearbyTiles do
+			table.insert(tile.NearbyTiles, self.TextParts[BG.nDToFlatIndex(idx, shape)])
+		end
 	end
-end
 
-function GameController:ToggleFlag(textPart, flagged)
-	self.TextParts[textPart]:ToggleFlag(flagged)
+	ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { { number } })
+		for _, tileInfo in tilesRevealed do
+			local idx = tileInfo[1]
+			local val = tileInfo[2]
+			self.TextParts[idx]:Reveal(false, val)
+		end
+	end)
+
+	ToggleFlag.OnClientEvent:Connect(function(textPart: number, flagged: boolean)
+		self.TextParts[textPart]:ToggleFlag(flagged)
+	end)
+
+	EndGame.OnClientEvent:Connect(function(tilesRevealed: { { number } }, revealMines: boolean)
+		for _, tileInfo in tilesRevealed do
+			local idx = tileInfo[1]
+			local val = tileInfo[2]
+			self.TextParts[idx]:Reveal(revealMines, val)
+		end
+	end)
 end
 
 return GameController

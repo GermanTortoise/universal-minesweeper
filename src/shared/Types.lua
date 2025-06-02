@@ -5,8 +5,8 @@ local Types = {}
 export type GameControllerImpl = {
 	__index: GameControllerImpl,
 	new: (shape: { number }, boardPos: Vector3) -> (),
-	Activate: (self: GameController, tilesRevealed: { { number } }) -> (),
-	ToggleFlag: (self: GameController, textPart: number, flagged: boolean) -> (),
+	-- Activate: (self: GameController, tilesRevealed: { { number } }) -> (),
+	-- ToggleFlag: (self: GameController, textPart: number, flagged: boolean) -> (),
 }
 
 export type GameController = typeof(setmetatable(
@@ -75,7 +75,7 @@ export type BoardImpl = {
 	ListenClicks: (self: Board) -> (),
 	CheckVictory: (self: Board) -> (),
 	LeftClick: (self: Board, idx: number) -> (),
-	_chord: (self: Board, idx: number) -> (),
+	_chord: (self: Board, tile: Tile) -> (),
 	ActivateTile: (self: Board, tile: Tile) -> (),
 }
 --[[
