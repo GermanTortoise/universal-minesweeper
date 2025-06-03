@@ -14,6 +14,7 @@ local ToggleFlag = Remote.getEvent("ToggleFlag")
 local ActivateTextParts = Remote.getEvent("ActivateTextParts")
 local EndGame = Remote.getEvent("EndGame")
 local NewGame = Remote.getEvent("NewGame")
+local Refresh = Remote.getBindableEvent("Refresh")
 
 type TileType = Types.Tile
 
@@ -51,7 +52,7 @@ function Board:PrepareBoard()
 	end
 	self:ListenClicks()
 	self:UpdateMinesCounter()
-	wait(1) -- replace with handshake
+	--wait(1) -- replace with handshake
 	NewGame:FireAllClients(self.Shape, self.Position)
 	-- once this fires, be ready to receive remotes
 end
@@ -82,6 +83,7 @@ function Board:EndGame(revealMines)
 	if self.GameEnded then
 		return
 	end
+	print("you finished the game: ", not revealMines, "good ly")
 	self.GameEnded = true
 	for _, tile in self.Tiles do
 		if not tile.Activated and (tile.Value >= 0 or (tile.Value < 0 and revealMines)) then
@@ -89,6 +91,7 @@ function Board:EndGame(revealMines)
 		end
 	end
 	EndGame:FireAllClients(self.Move, revealMines)
+	Refresh:Fire()
 end
 
 function Board:ActivateTile(tile)
@@ -127,7 +130,6 @@ function Board:CheckVictory()
 	end
 	if activated == self.totalNumTiles - self.Mines then
 		self:EndGame(false)
-		-- self.MinesCounter.Label.Text = "You won!"
 	end
 end
 

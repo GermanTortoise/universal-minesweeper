@@ -63,7 +63,6 @@ function GameController.new(shape, boardPos)
 		local tilePos = getBoardRelativePos(idx, shape)
 		self.TextParts[idx] = TextPart.new(TILE_SIZE, CFrame.new(boardPos + tilePos * TILE_SPACING), idx)
 	end
-	-- TODO: do init nearby tiles
 	for _, tile in self.TextParts do
 		local nearbyTiles = BG.indexOfNearbyTiles(tile.Idx, shape)
 		for _, idx in nearbyTiles do
@@ -88,6 +87,13 @@ function GameController.new(shape, boardPos)
 			local idx = tileInfo[1]
 			local val = tileInfo[2]
 			self.TextParts[idx]:Reveal(revealMines, val)
+		end
+		for _, tile in self.TextParts do
+			tile:_show()
+		end
+		task.wait(3)
+		for _, tile in self.TextParts do
+			tile:Destroy()
 		end
 	end)
 end
