@@ -7,13 +7,14 @@ local BG = require(shared.BoardGenerator)
 local TextPart = require(client.StarterPlayerScripts.TextPart)
 local Remote = require(shared.remotes)
 local Types = require(shared.Types)
+local MIM = require(client.StarterPlayerScripts.MouseInputsManager)
+local Maid = require(shared.Maid)
 
 local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
 
 local ActivateTextParts = Remote.getEvent("ActivateTextParts")
 local ToggleFlag = Remote.getEvent("ToggleFlag")
-local EndGame = Remote.getEvent("EndGame")
 
 local function getBoardRelativePos(pos: number, shape: { number }): Vector3
 	-- {x1, y1, z1, x2, y2, z2, x3, y3} to
@@ -54,6 +55,7 @@ GameController.__index = GameController
 
 function GameController.new(shape, boardPos)
 	local self = setmetatable({}, GameController)
+	self._maid = Maid.new()
 	local totalNumTextParts = 1
 	for _, v in shape do
 		totalNumTextParts *= v
@@ -70,7 +72,7 @@ function GameController.new(shape, boardPos)
 		end
 	end
 
-	ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { { number } })
+	local activate = ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { { number } })
 		for _, tileInfo in tilesRevealed do
 			local idx = tileInfo[1]
 			local val = tileInfo[2]
@@ -78,24 +80,35 @@ function GameController.new(shape, boardPos)
 		end
 	end)
 
-	ToggleFlag.OnClientEvent:Connect(function(textPart: number, flagged: boolean)
+	local toggle = ToggleFlag.OnClientEvent:Connect(function(textPart: number, flagged: boolean)
 		self.TextParts[textPart]:ToggleFlag(flagged)
 	end)
 
-	EndGame.OnClientEvent:Connect(function(tilesRevealed: { { number } }, revealMines: boolean)
-		for _, tileInfo in tilesRevealed do
-			local idx = tileInfo[1]
-			local val = tileInfo[2]
-			self.TextParts[idx]:Reveal(revealMines, val)
-		end
-		for _, tile in self.TextParts do
+	self._maid:GiveTask(activate)
+	self._maid:GiveTask(toggle)
+	return self
+end
+
+function GameController:EndGame(tilesRevealed, revealMines)
+	for _, tileInfo in tilesRevealed do
+		local idx = tileInfo[1]
+		local val = tileInfo[2]
+		self.TextParts[idx]:Reveal(revealMines, val)
+	end
+	MIM.Reset()
+	for _, tile in self.TextParts do
+		if tile.Val ~= 0 then
 			tile:_show()
 		end
-		task.wait(3)
-		for _, tile in self.TextParts do
-			tile:Destroy()
-		end
-	end)
+	end
+end
+
+function GameController:Destroy()
+	for _, tile in self.TextParts do
+		tile:Destroy()
+	end
+	table.clear(self.TextParts)
+	self._maid:Destroy()
 end
 
 return GameController

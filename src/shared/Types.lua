@@ -1,16 +1,21 @@
 --!strict
+local shared = game:GetService("ReplicatedStorage")
+type Maid = typeof(require(shared.Maid))
 
 local Types = {}
 
 export type GameControllerImpl = {
 	__index: GameControllerImpl,
-	new: (shape: { number }, boardPos: Vector3) -> (),
+	new: (shape: { number }, boardPos: Vector3) -> GameController,
+	EndGame: (self: GameController, tilesRevealed: { { number } }, revealed: boolean) -> (),
+	Destroy: (self: GameController) -> (),
 	-- Activate: (self: GameController, tilesRevealed: { { number } }) -> (),
 	-- ToggleFlag: (self: GameController, textPart: number, flagged: boolean) -> (),
 }
 
 export type GameController = typeof(setmetatable(
 	{} :: {
+		_maid: Maid,
 		TextParts: { TextPart },
 	},
 	{} :: GameControllerImpl
@@ -43,6 +48,7 @@ export type TextPart = typeof(setmetatable(
 		Activated: boolean,
 		Flagged: boolean,
 		NearbyTiles: { TextPart },
+		_maid: Maid,
 	},
 	{} :: TextPartImpl
 ))
@@ -69,7 +75,7 @@ export type BoardImpl = {
 	__index: BoardImpl,
 	new: (shape: { number }, numMines: number, position: Vector3) -> Board,
 	PrepareBoard: (self: Board) -> (),
-	ResetGame: (self: Board) -> (),
+	-- ResetGame: (self: Board) -> (),
 	EndGame: (self: Board, revealMines: boolean) -> (),
 	UpdateMinesCounter: (self: Board) -> (),
 	ListenClicks: (self: Board) -> (),
@@ -77,12 +83,14 @@ export type BoardImpl = {
 	LeftClick: (self: Board, idx: number) -> (),
 	_chord: (self: Board, tile: Tile) -> (),
 	ActivateTile: (self: Board, tile: Tile) -> (),
+	Destroy: (self: Board) -> (),
 }
 --[[
 blah
 ]]
 export type Board = typeof(setmetatable(
 	{} :: {
+		_maid: Maid,
 		Shape: { number },
 		Mines: number,
 		Position: Vector3,

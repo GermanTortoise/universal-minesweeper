@@ -7,7 +7,6 @@ local MouseInputsManager = {}
 
 local LeftClickHandlers: { [BasePart]: () -> () } = {}
 local RightClickHandlers: { [BasePart]: () -> () } = {}
--- local Neighbors: { [BasePart]: { Tile } } = {}
 local Mouse = game.Players.LocalPlayer:GetMouse()
 local UIS = game:GetService("UserInputService")
 local SelectionBox = Instance.new("SelectionBox")
@@ -16,7 +15,6 @@ SelectionBox.Parent = game:GetService("Players").LocalPlayer.PlayerGui
 local HiddenParts = Instance.new("Folder")
 HiddenParts.Parent = game.Workspace
 
--- function MouseInputsManager.initialize()
 -- Mouse.Target must be the same part on down and up to register a click
 -- This allows for "safe" clicking (drag away to cancel)
 local targetL: BasePart
@@ -47,7 +45,6 @@ UIS.InputEnded:Connect(function(input)
 end)
 
 Mouse.TargetFilter = HiddenParts
--- end
 
 function MouseInputsManager.BindPartToClick(part: Part, leftClickCallback: () -> (), rightClickCallback: () -> ())
 	LeftClickHandlers[part] = leftClickCallback
@@ -62,14 +59,8 @@ end
 function UpdateSelectionBox()
 	if LeftClickHandlers[Mouse.Target] or RightClickHandlers[Mouse.Target] then
 		SelectionBox.Adornee = Mouse.Target
-		-- for _, tile in Neighbors[Mouse.Target] do
-		-- 	tile:SetHighlight(true)
-		-- end
 	else
 		SelectionBox.Adornee = nil
-		-- for _, tile in Neighbors[Mouse.Target] do
-		-- 	tile:SetHighlight(false)
-		-- end
 	end
 end
 Mouse.Move:Connect(UpdateSelectionBox)
@@ -79,5 +70,10 @@ end
 
 function MouseInputsManager.ShowToMouse(part: BasePart)
 	part.Parent = game.Workspace
+end
+
+function MouseInputsManager.Reset()
+	table.clear(LeftClickHandlers)
+	table.clear(RightClickHandlers)
 end
 return MouseInputsManager

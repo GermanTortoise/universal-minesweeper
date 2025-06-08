@@ -108,7 +108,7 @@ end
 function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }): { { number } }
 	-- gets indices of tiles around one mine
 	local ndIdx: { number }
-	if type(idx) == "number" then
+	if typeof(idx) == "number" then
 		ndIdx = MSmodule.flatToNDIndex(idx, shape)
 	else
 		ndIdx = idx
@@ -164,6 +164,29 @@ function MSmodule.toString(arr: { any }, out: any): string
 		for _, v in arr do
 			out = out .. ("\n" .. MSmodule.toString(v))
 		end
+	end
+	return out
+end
+
+function MSmodule.getRandomShape(): { number }
+	math.randomseed(os.time())
+	local switch = math.random()
+	local out = {}
+	-- 0 - 0.1: 1D
+	-- 0.1 - 0.6: 2D
+	-- 0.6 - 0.8: 3D
+	-- 0.8 - 1: 4D
+	if switch > 0 then
+		table.insert(out, math.random(5, 20))
+	end
+	if switch > 0.1 then
+		table.insert(out, math.random(5, 20))
+	end
+	if switch > 0.6 then
+		table.insert(out, math.random(7, 20))
+	end
+	if switch > 0.9 then
+		table.insert(out, math.random(2, 5))
 	end
 	return out
 end

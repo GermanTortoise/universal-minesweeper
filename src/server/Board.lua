@@ -7,6 +7,7 @@ local Tile = require(server.Tile)
 local BoardGen = require(shared.BoardGenerator)
 local Types = require(shared.Types)
 local Remote = require(shared.remotes)
+local Maid = require(shared.Maid)
 
 local LeftClick = Remote.getEvent("LeftClick")
 local RightClick = Remote.getEvent("RightClick")
@@ -23,6 +24,7 @@ Board.__index = Board
 
 function Board.new(shape, numMines, position)
 	local self = setmetatable({}, Board)
+	self._maid = Maid.new()
 	self.Shape = shape
 	self.Mines = numMines
 	self.Position = position
@@ -58,13 +60,15 @@ function Board:PrepareBoard()
 end
 
 function Board:ListenClicks()
-	LeftClick.OnServerEvent:Connect(function(_, idx: number)
+	local left = LeftClick.OnServerEvent:Connect(function(_, idx: number)
 		self:LeftClick(idx)
 	end)
-	RightClick.OnServerEvent:Connect(function(_, idx: number)
+	local right = RightClick.OnServerEvent:Connect(function(_, idx: number)
 		-- TODO (maybe): can probably do flagging on client for better latency
 		ToggleFlag:FireAllClients(idx, self.Tiles[idx]:ToggleFlag())
 	end)
+	self._maid:GiveTask(left)
+	self._maid:GiveTask(right)
 end
 
 function Board:LeftClick(idx)
@@ -75,7 +79,9 @@ function Board:LeftClick(idx)
 	else
 		self:ActivateTile(tile)
 	end
-	ActivateTextParts:FireAllClients(self.Move)
+	if not self.GameEnded then
+		ActivateTextParts:FireAllClients(self.Move)
+	end
 end
 
 function Board:EndGame(revealMines)
@@ -92,6 +98,7 @@ function Board:EndGame(revealMines)
 	end
 	EndGame:FireAllClients(self.Move, revealMines)
 	Refresh:Fire()
+	self:Destroy()
 end
 
 function Board:ActivateTile(tile)
@@ -122,28 +129,30 @@ function Board:_chord(tile)
 end
 
 function Board:CheckVictory()
+	-- print("checking")
 	local activated = 0
 	for _, tile in self.Tiles do
 		if tile.Activated then
 			activated += 1
 		end
 	end
+	-- print(activated)
 	if activated == self.totalNumTiles - self.Mines then
 		self:EndGame(false)
 	end
 end
 
-function Board:ResetGame()
-	print("Resetting")
-	self.Tiles = {}
-	self.GameEnded = false
-	self.FlagsCount = 0
-	self:PrepareBoard()
-end
-
 function Board:UpdateMinesCounter()
 	-- self.MinesCounter.Label.Text = "Mines left: " .. tostring(self.Mines - self.FlagsCount)
 	-- TODO: this
+end
+
+function Board:Destroy()
+	for _, tile in self.Tiles do
+		table.clear(tile.NearbyTiles)
+	end
+	table.clear(self.Tiles)
+	self._maid:Destroy()
 end
 
 return Board

@@ -5,6 +5,7 @@ local client = game:GetService("StarterPlayer")
 local Types = require(shared.Types)
 local MIM = require(client.StarterPlayerScripts:WaitForChild("MouseInputsManager"))
 local Remote = require(shared.remotes)
+local Maid = require(shared.Maid)
 
 local LeftClick = Remote.getEvent("LeftClick")
 local RightClick = Remote.getEvent("RightClick")
@@ -16,8 +17,10 @@ TextPart.__index = TextPart
 
 function TextPart.new(size, location, idx)
 	local self = setmetatable({}, TextPart)
+	self._maid = Maid.new()
 
 	self.Part = Instance.new("Part")
+	self._maid:GiveTask(self.Part)
 	self.Part.Anchored = true
 	self.Part.Material = Enum.Material.SmoothPlastic
 	self.Part.Size = size
@@ -43,8 +46,12 @@ function TextPart.new(size, location, idx)
 	self.Activated = false -- should really be called revealed
 	self.Flagged = false
 	self.NearbyTiles = {}
+	self._maid:GiveTask(function()
+		table.clear(self.NearbyTiles)
+	end)
 
 	MIM.BindPartToClick(self.Part, function()
+		print("lefted")
 		if not self.Flagged then
 			LeftClick:FireServer(self.Idx)
 		end
@@ -84,19 +91,11 @@ function TextPart:Reveal(revealMines, val)
 end
 
 function TextPart:_show()
-	self.Part.Transparency = 0
-	self.Part.CanCollide = true
-	self.Label.Text = tostring(self.Val)
-	-- self.collisionBox.CanCollide = true
-	MIM.ShowToMouse(self.Part)
+	self.Part.Parent = game.Workspace
 end
 
 function TextPart:_hide()
-	self.Part.Transparency = 1
-	self.Part.CanCollide = false
-	self.Label.Text = ""
-	-- self.collisionBox.CanCollide = false
-	MIM.HideFromMouse(self.Part)
+	self.Part.Parent = nil
 end
 
 function TextPart:ToggleFlag(flagged)
@@ -148,7 +147,7 @@ function TextPart:_hasCorrectNumberFlags()
 end
 
 function TextPart:Destroy()
-	return self.Part:Destroy()
+	return self._maid:Destroy()
 end
 
 return TextPart
