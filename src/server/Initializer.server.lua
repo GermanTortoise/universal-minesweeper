@@ -10,7 +10,7 @@ local Ready = Remote.getEvent("Ready")
 
 local Board = require(server.Board)
 
-local densities = { 0.2, 0.15, 0.07, 0.025 }
+local DENSITIES = table.freeze({ 0.2, 0.15, 0.07, 0.025 })
 
 task.wait(2)
 while true do
@@ -22,10 +22,10 @@ while true do
 	for _, dim in shape do
 		totalNumTiles *= dim
 	end
-	local mines = math.floor(mineMultiplier * densities[#shape] * totalNumTiles)
+	local mines = math.floor(mineMultiplier * DENSITIES[#shape] * totalNumTiles)
 
 	Board.new(shape, mines, Vector3.new(0, 0, 0))
-	-- Board.new({ 8, 8 }, 5, Vector3.new(0, 0, 0))
+	-- Board.new({ 8, 8, 8, 4 }, 50, Vector3.new(0, 0, 0))
 
 	print("Ready!")
 	Refresh.Event:Wait()

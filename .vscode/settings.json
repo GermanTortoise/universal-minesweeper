@@ -1,4 +1,4 @@
 {
     "stylua.targetReleaseVersion": "latest",
-    // "luau-lsp.fflags.enableNewSolver": true
+    "luau-lsp.fflags.enableNewSolver": true
 }

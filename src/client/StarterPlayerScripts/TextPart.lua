@@ -2,7 +2,6 @@
 local shared = game:GetService("ReplicatedStorage")
 local client = game:GetService("StarterPlayer")
 
-local Types = require(shared.Types)
 local MIM = require(client.StarterPlayerScripts:WaitForChild("MouseInputsManager"))
 local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
@@ -10,15 +9,26 @@ local Maid = require(shared.Maid)
 local LeftClick = Remote.getEvent("LeftClick")
 local RightClick = Remote.getEvent("RightClick")
 
-type TextPartType = Types.TextPartImpl
-
-local TextPart: TextPartType = {} :: TextPartType
+local TextPart = {}
 TextPart.__index = TextPart
 
-function TextPart.new(size, location, idx)
+export type TextPart = setmetatable<
+	{
+		Part: Part,
+		Label: TextLabel,
+		Idx: number,
+		Val: number,
+		Activated: boolean,
+		Flagged: boolean,
+		NearbyTiles: { TextPart },
+		_maid: any,
+	},
+	typeof(TextPart)
+>
+
+function TextPart.new(size: Vector3, location: CFrame, idx: number): TextPart
 	local self = setmetatable({}, TextPart)
 	self._maid = Maid.new()
-
 	self.Part = Instance.new("Part")
 	self._maid:GiveTask(self.Part)
 	self.Part.Anchored = true
@@ -33,7 +43,7 @@ function TextPart.new(size, location, idx)
 	surfaceGui.CanvasSize = 25 * Vector2.new(size.Z, size.X)
 
 	self.Label = Instance.new("TextLabel")
-	self.Label.Size = UDim2.new(1, 0, 1, 0)
+	self.Label.Size = UDim2.fromScale(1, 1)
 	self.Label.BackgroundTransparency = 1
 	self.Label.TextScaled = true
 	self.Label.Text = ""
@@ -42,7 +52,7 @@ function TextPart.new(size, location, idx)
 	surfaceGui.Parent = self.Part
 
 	self.Idx = idx
-	self.Val = nil
+	self.Val = -1
 	self.Activated = false -- should really be called revealed
 	self.Flagged = false
 	self.NearbyTiles = {}
@@ -51,7 +61,6 @@ function TextPart.new(size, location, idx)
 	end)
 
 	MIM.BindPartToClick(self.Part, function()
-		print("lefted")
 		if not self.Flagged then
 			LeftClick:FireServer(self.Idx)
 		end
@@ -64,15 +73,15 @@ function TextPart.new(size, location, idx)
 	return self
 end
 
-function TextPart:RegisterClick(leftClickCallback, rightClickCallback)
+function TextPart.RegisterClick(self: TextPart, leftClickCallback, rightClickCallback)
 	return MIM.BindPartToClick(self.Part, leftClickCallback, rightClickCallback)
 end
 
-function TextPart:UnregisterClick()
+function TextPart.UnregisterClick(self: TextPart)
 	return MIM.UnbindPartFromClick(self.Part)
 end
 
-function TextPart:Reveal(revealMines, val)
+function TextPart.Reveal(self: TextPart, revealMines, val)
 	self.Val = val
 	self.Activated = true
 	if self.Val == 0 then
@@ -90,15 +99,15 @@ function TextPart:Reveal(revealMines, val)
 	self:_toggleHiddenTiles()
 end
 
-function TextPart:_show()
+function TextPart._show(self: TextPart)
 	self.Part.Parent = game.Workspace
 end
 
-function TextPart:_hide()
+function TextPart._hide(self: TextPart)
 	self.Part.Parent = nil
 end
 
-function TextPart:ToggleFlag(flagged)
+function TextPart.ToggleFlag(self: TextPart, flagged: boolean)
 	self.Flagged = flagged
 	if self.Flagged then
 		self.Label.Text = "*Flag*"
@@ -109,12 +118,13 @@ function TextPart:ToggleFlag(flagged)
 end
 
 --[[
-Checks if this tile no longer provides information about nearby mines. \
-Requirements:\
-Has correct number of flags nearby, \
-All nearby tiles are either activated or flags
+Checks if this tile no longer provides information about nearby mines.
+
+Requirements:
+- Has correct number of flags nearby,
+- All nearby tiles are either activated or flags
 ]]
-function TextPart:_canHide()
+function TextPart._canHide(self: TextPart)
 	for _, tile in self.NearbyTiles do
 		if not tile.Activated and not tile.Flagged then
 			return false
@@ -123,7 +133,7 @@ function TextPart:_canHide()
 	return self:_hasCorrectNumberFlags()
 end
 
-function TextPart:_toggleHiddenTiles()
+function TextPart._toggleHiddenTiles(self: TextPart)
 	for _, tile in self.NearbyTiles do
 		-- ignore unknown/unactivted tiles by short circuit
 		if tile.Activated and tile.Val > 0 then
@@ -136,7 +146,7 @@ function TextPart:_toggleHiddenTiles()
 	end
 end
 
-function TextPart:_hasCorrectNumberFlags()
+function TextPart._hasCorrectNumberFlags(self: TextPart)
 	local nearbyFlags = 0
 	for _, tile in self.NearbyTiles do
 		if tile.Flagged then
@@ -146,7 +156,7 @@ function TextPart:_hasCorrectNumberFlags()
 	return self.Val == nearbyFlags
 end
 
-function TextPart:Destroy()
+function TextPart.Destroy(self: TextPart)
 	return self._maid:Destroy()
 end
 

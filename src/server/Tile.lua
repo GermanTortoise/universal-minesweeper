@@ -1,11 +1,20 @@
 --!strict
-local shared = game:GetService("ReplicatedStorage")
-local Types = require(shared.Types)
 
-local Tile = {} :: Types.TileImpl
+local Tile = {}
 Tile.__index = Tile
 
-function Tile.new(val, idx)
+export type Tile = setmetatable<
+	{   
+		Activated: boolean,
+		Flagged: boolean,
+		NearbyTiles: { Tile },
+		Value: number,
+		Idx: number,
+	},
+	typeof(Tile)
+>
+
+function Tile.new(val, idx): Tile
 	local self = setmetatable({}, Tile)
 	self.Activated = false
 	self.Flagged = false
@@ -23,7 +32,7 @@ function Tile:ToggleFlag()
 	return self.Flagged
 end
 
-function Tile:HasCorrectNumberFlags()
+function Tile.HasCorrectNumberFlags(self: Tile)
 	local nearbyFlags = 0
 	for _, tile in self.NearbyTiles do
 		if tile.Flagged then

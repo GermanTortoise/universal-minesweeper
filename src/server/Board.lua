@@ -1,11 +1,8 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
--- local client = game:GetService("StarterPlayer")
 local server = game:GetService("ServerScriptService")
 local Tile = require(server.Tile)
--- local TextPart = require(client.StarterPlayerScripts.TextPart)
 local BoardGen = require(shared.BoardGenerator)
-local Types = require(shared.Types)
 local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
 
@@ -17,12 +14,28 @@ local EndGame = Remote.getEvent("EndGame")
 local NewGame = Remote.getEvent("NewGame")
 local Refresh = Remote.getBindableEvent("Refresh")
 
-type TileType = Types.Tile
-
-local Board = {} :: Types.BoardImpl
+local Board = {}
 Board.__index = Board
 
-function Board.new(shape, numMines, position)
+export type Board = setmetatable<
+	{
+		_maid: any,
+		Shape: { number },
+		Mines: number,
+		Position: Vector3,
+		GameEnded: boolean,
+		FlagsCount: number,
+		Tiles: { Tile.Tile },
+		totalNumTiles: number,
+		Move: { { number } },
+		-- Resetter: TextPart,
+		-- MinesCounter: TextPart,
+		NumberBoard: { number },
+	},
+	typeof(Board)
+>
+
+function Board.new(shape: { number }, numMines: number, position: Vector3): Board
 	local self = setmetatable({}, Board)
 	self._maid = Maid.new()
 	self.Shape = shape
@@ -40,8 +53,8 @@ function Board.new(shape, numMines, position)
 	self:PrepareBoard()
 	return self
 end
-
-function Board:PrepareBoard()
+ 
+function Board.PrepareBoard(self: Board)
 	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
 	for idx, val in self.NumberBoard do
 		self.Tiles[idx] = Tile.new(val, idx)
@@ -59,7 +72,7 @@ function Board:PrepareBoard()
 	-- once this fires, be ready to receive remotes
 end
 
-function Board:ListenClicks()
+function Board.ListenClicks(self: Board)
 	local left = LeftClick.OnServerEvent:Connect(function(_, idx: number)
 		self:LeftClick(idx)
 	end)
@@ -71,7 +84,7 @@ function Board:ListenClicks()
 	self._maid:GiveTask(right)
 end
 
-function Board:LeftClick(idx)
+function Board.LeftClick(self: Board, idx: number)
 	table.clear(self.Move)
 	local tile = self.Tiles[idx]
 	if tile.Activated then
@@ -84,7 +97,7 @@ function Board:LeftClick(idx)
 	end
 end
 
-function Board:EndGame(revealMines)
+function Board.EndGame(self: Board, revealMines: boolean)
 	revealMines = revealMines or false
 	if self.GameEnded then
 		return
@@ -101,7 +114,7 @@ function Board:EndGame(revealMines)
 	self:Destroy()
 end
 
-function Board:ActivateTile(tile)
+function Board.ActivateTile(self: Board, tile: Tile.Tile)
 	-- TODO: figure out revealing 0's when there are misplaced flags
 	if tile.Activated or tile.Flagged then
 		return
@@ -118,7 +131,7 @@ function Board:ActivateTile(tile)
 	self:CheckVictory()
 end
 
-function Board:_chord(tile)
+function Board._chord(self: Board, tile: Tile.Tile)
 	if tile:HasCorrectNumberFlags() then
 		for _, adj in tile.NearbyTiles do
 			if not adj.Flagged then
@@ -128,7 +141,7 @@ function Board:_chord(tile)
 	end
 end
 
-function Board:CheckVictory()
+function Board.CheckVictory(self: Board)
 	-- print("checking")
 	local activated = 0
 	for _, tile in self.Tiles do
@@ -142,12 +155,12 @@ function Board:CheckVictory()
 	end
 end
 
-function Board:UpdateMinesCounter()
+function Board.UpdateMinesCounter(self: Board)
 	-- self.MinesCounter.Label.Text = "Mines left: " .. tostring(self.Mines - self.FlagsCount)
 	-- TODO: this
 end
 
-function Board:Destroy()
+function Board.Destroy(self: Board)
 	for _, tile in self.Tiles do
 		table.clear(tile.NearbyTiles)
 	end

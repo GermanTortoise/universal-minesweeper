@@ -1,13 +1,11 @@
 --!strict
-local shared = game:GetService("ReplicatedStorage")
+local client = game:GetService("StarterPlayer")
 
-local Types = require(shared.Types)
-type Tile = Types.TextPart
 local MouseInputsManager = {}
 
 local LeftClickHandlers: { [BasePart]: () -> () } = {}
 local RightClickHandlers: { [BasePart]: () -> () } = {}
-local Mouse = game.Players.LocalPlayer:GetMouse()
+local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
 local UIS = game:GetService("UserInputService")
 local SelectionBox = Instance.new("SelectionBox")
 SelectionBox.Color3 = Color3.new()

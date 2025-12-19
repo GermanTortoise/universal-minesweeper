@@ -9,7 +9,7 @@ Maid.ClassName = "Maid"
 --- Returns a new Maid object
 -- @constructor Maid.new()
 -- @treturn Maid
-function Maid.new()
+function Maid.new(): any
 	return setmetatable({
 		_tasks = {},
 	}, Maid)

@@ -106,20 +106,20 @@ function MSmodule.TableConcat(t1: { number }, t2: { number }): { number }
 end
 
 function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }): { { number } }
-	-- gets indices of tiles around one mine
-	local ndIdx: { number }
+	-- gets nD indices of tiles around a tile (mine neighbors)
+	local nDIdx: { number }
 	if typeof(idx) == "number" then
-		ndIdx = MSmodule.flatToNDIndex(idx, shape)
+		nDIdx = MSmodule.flatToNDIndex(idx, shape)
 	else
-		ndIdx = idx
+		nDIdx = idx
 	end
-	local dim = ndIdx[1] -- highest dimension
-	local transform = { -1, 0, 1 }
+	local dim = nDIdx[1] -- highest dimension
+	local transform = { -1, 0, 1 } -- where to look for mines
 	local min, max = 1, shape[1]
 	local out = {}
-	if #ndIdx == 1 then
+	if #nDIdx == 1 then -- 1D board
 		for _, v in transform do
-			local tmp = dim + v
+			local tmp: number = dim + v
 			if min <= tmp and tmp <= max then
 				table.insert(out, { tmp })
 			end
@@ -127,7 +127,7 @@ function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }
 		return out
 	else
 		local subIdx = {}
-		for i, v in ndIdx do
+		for i, v in nDIdx do
 			if i ~= 1 then
 				table.insert(subIdx, v)
 			end
@@ -177,13 +177,13 @@ function MSmodule.getRandomShape(): { number }
 	-- 0.6 - 0.8: 3D
 	-- 0.8 - 1: 4D
 	if switch > 0 then
-		table.insert(out, math.random(5, 20))
+		table.insert(out, math.random(8, 20))
 	end
 	if switch > 0.1 then
-		table.insert(out, math.random(5, 20))
+		table.insert(out, math.random(8, 20))
 	end
 	if switch > 0.6 then
-		table.insert(out, math.random(7, 20))
+		table.insert(out, math.random(8, 20))
 	end
 	if switch > 0.9 then
 		table.insert(out, math.random(2, 5))
