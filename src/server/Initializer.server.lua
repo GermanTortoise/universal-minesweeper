@@ -1,39 +1,26 @@
+--!strict
 local shared = game:GetService("ReplicatedStorage")
 local server = game:GetService("ServerScriptService")
 
-local Remote = require(shared.remotes)
-local BG = require(shared.BoardGenerator)
+local Players = game:GetService("Players")
 
-local Refresh = Remote.getBindableEvent("Refresh")
-local ClearBoard = Remote.getEvent("ClearBoard")
-local Ready = Remote.getEvent("Ready")
+local InitHelpers = require(server.InitHelpers)
 
-local Board = require(server.Board)
 
-local DENSITIES = table.freeze({ 0.2, 0.15, 0.07, 0.025 })
+InitHelpers.InitTeams()
+print("welcome\n")
 
-task.wait(2)
-while true do
-	print("Initializing... in 10 sec")
-	local shape = BG.getRandomShape()
-	local mineMultiplier = math.random() / 5 + 0.9 -- 0.9 to 1.1
-	-- TODO: handle or make sure this doesn't cause more mines than there are tiles
-	local totalNumTiles = 1
-	for _, dim in shape do
-		totalNumTiles *= dim
+Players.PlayerAdded:Connect(function(Player)
+	if InitHelpers.SPECTATORS then
+		Player.Team = InitHelpers.SPECTATORS
 	end
-	local mines = math.floor(mineMultiplier * DENSITIES[#shape] * totalNumTiles)
+end)
 
-	Board.new(shape, mines, Vector3.new(0, 0, 0))
-	-- Board.new({ 8, 8, 8, 4 }, 50, Vector3.new(0, 0, 0))
+task.wait(3) -- should match delay between rounds
+			 -- the delay before the first round (when server starts)
 
-	print("Ready!")
-	Refresh.Event:Wait()
-	print("finished game")
-	task.wait(5)
-	ClearBoard:FireAllClients()
-	Ready.OnServerEvent:Wait()
-	task.wait(2)
+while true do
+	InitHelpers.StartGame()
 end
 -- TODO: stop detecting clicks after game over cuz it breaks things
 -- but also gotta fix the root cause of stuff not deleting correctly

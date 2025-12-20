@@ -1,15 +1,17 @@
 --!strict
-local client = game:GetService("StarterPlayer")
+
+local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
+local UIS = game:GetService("UserInputService")
 
 local MouseInputsManager = {}
 
 local LeftClickHandlers: { [BasePart]: () -> () } = {}
 local RightClickHandlers: { [BasePart]: () -> () } = {}
-local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
-local UIS = game:GetService("UserInputService")
+
 local SelectionBox = Instance.new("SelectionBox")
 SelectionBox.Color3 = Color3.new()
 SelectionBox.Parent = game:GetService("Players").LocalPlayer.PlayerGui
+
 local HiddenParts = Instance.new("Folder")
 HiddenParts.Parent = game.Workspace
 
@@ -17,6 +19,7 @@ HiddenParts.Parent = game.Workspace
 -- This allows for "safe" clicking (drag away to cancel)
 local targetL: BasePart
 local targetR: BasePart
+
 UIS.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		targetL = Mouse.Target
@@ -24,6 +27,7 @@ UIS.InputBegan:Connect(function(input)
 		targetR = Mouse.Target
 	end
 end)
+
 UIS.InputEnded:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.MouseButton1 then
 		if targetL == Mouse.Target then

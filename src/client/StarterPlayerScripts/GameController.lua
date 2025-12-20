@@ -31,7 +31,7 @@ function GameController.new(shape: { number }, boardPos: Vector3)
 	end
 	self.TextParts = {}
 	for idx = 1, totalNumTextParts do
-		local tilePos = self:getBoardRelativePos(idx, shape)
+		local tilePos = self:_getBoardRelativePos(idx, shape)
 		self.TextParts[idx] = TextPart.new(TILE_SIZE, CFrame.new(boardPos + tilePos * TILE_SPACING), idx)
 	end
 	for _, tile in self.TextParts do
@@ -80,7 +80,7 @@ function GameController.Destroy(self: GameController)
 	self._maid:Destroy()
 end
 
-function GameController.getBoardRelativePos(self: GameController, pos: number, shape: { number }): Vector3
+function GameController._getBoardRelativePos(_self: GameController, pos: number, shape: { number }): Vector3
 	-- {x1, y1, z1, x2, y2, z2, x3, y3} to
 	-- {{x1, y1, z1}, {x2, y2, z2}, {x3, y3}}
 	local function buildTriples(idx: { number })

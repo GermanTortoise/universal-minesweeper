@@ -1,6 +1,7 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
 local server = game:GetService("ServerScriptService")
+
 local Tile = require(server.Tile)
 local BoardGen = require(shared.BoardGenerator)
 local Remote = require(shared.remotes)
@@ -155,7 +156,7 @@ function Board.CheckVictory(self: Board)
 	end
 end
 
-function Board.UpdateMinesCounter(self: Board)
+function Board.UpdateMinesCounter(_self: Board)
 	-- self.MinesCounter.Label.Text = "Mines left: " .. tostring(self.Mines - self.FlagsCount)
 	-- TODO: this
 end

@@ -1,3 +1,5 @@
+--!strict
+
 local shared = game:GetService("ReplicatedStorage")
 local client = game:GetService("StarterPlayer")
 
@@ -10,17 +12,22 @@ local Ready = Remote.getEvent("Ready")
 
 local GameController = require(client.StarterPlayerScripts.GameController)
 
-local Game
+local Game: GameController.GameController?
+
 NewGame.OnClientEvent:Connect(function(shape: { number }, pos: Vector3)
 	Game = GameController.new(shape, pos)
 end)
 
 EndGame.OnClientEvent:Connect(function(tilesRevealed: { { number } }, revealed: boolean)
-	Game:EndGame(tilesRevealed, revealed)
+	if Game then
+		Game:EndGame(tilesRevealed, revealed)
+	end
 end)
 
 ClearBoard.OnClientEvent:Connect(function()
-	Game:Destroy()
+	if Game then
+		Game:Destroy()
+	end
 	Game = nil
 	Ready:FireServer()
 end)

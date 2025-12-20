@@ -9,14 +9,14 @@ Players.PlayerAdded:Connect(function(player)
 		Data = Saver:GetAsync(tostring(player.UserId))
 	end)
 
-	if success then
-		if Data then
-			for i, v in Data do
-				player:WaitForChild("leaderstats"):WaitForChild(i).Value = v
-			end
-		end
-	else
+	if not success then
 		error(errormessage)
+	end
+
+	if Data then
+		for i, v in Data do
+			player:WaitForChild("leaderstats"):WaitForChild(i).Value = v
+		end
 	end
 end)
 
@@ -29,6 +29,7 @@ local function Save(player)
 	local success, errormessage = pcall(function()
 		Saver:SetAsync(tostring(player.UserId), SavedData)
 	end)
+	
 	if not success then
 		error(errormessage)
 	end
