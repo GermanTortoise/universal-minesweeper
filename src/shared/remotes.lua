@@ -1,4 +1,4 @@
---!strict
+--!nonstrict
 -- Stolen from Nidoxs from ROSS server
 
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -20,6 +20,8 @@ local function _getRemoteInstance(
 	type: "RemoteEvent" | "RemoteFunction"
 ): RemoteEvent | RemoteFunction
 	local remote
+
+	-- assert(remoteFolder, "foo")
 
 	if IS_CLIENT then
 		remote = remoteFolder:WaitForChild(remoteName)

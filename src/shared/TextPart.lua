@@ -2,29 +2,26 @@
 local shared = game:GetService("ReplicatedStorage")
 local client = game:GetService("StarterPlayer")
 
-local MIM = require(client.StarterPlayerScripts:WaitForChild("MouseInputsManager"))
+local MIM = require(shared:WaitForChild("MouseInputsManager"))
 local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
 
-local LeftClick = Remote.getEvent("LeftClick")
-local RightClick = Remote.getEvent("RightClick")
+local OnLeftClick = Remote.getBindableEvent("OnLeftClick")
+local OnRightClick = Remote.getBindableEvent("OnRightClick")
 
 local TextPart = {}
 TextPart.__index = TextPart
 
-export type TextPart = setmetatable<
-	{
-		Part: Part,
-		Label: TextLabel,
-		Idx: number,
-		Val: number,
-		Activated: boolean,
-		Flagged: boolean,
-		NearbyTiles: { TextPart },
-		_maid: any,
-	},
-	typeof(TextPart)
->
+export type TextPart = setmetatable<{
+	Part: Part,
+	Label: TextLabel,
+	Idx: number,
+	Val: number,
+	Activated: boolean,
+	Flagged: boolean,
+	NearbyTiles: { TextPart },
+	_maid: any,
+}, typeof(TextPart)>
 
 function TextPart.new(size: Vector3, location: CFrame, idx: number): TextPart
 	local self = setmetatable({}, TextPart)
@@ -62,11 +59,11 @@ function TextPart.new(size: Vector3, location: CFrame, idx: number): TextPart
 
 	MIM.BindPartToClick(self.Part, function()
 		if not self.Flagged then
-			LeftClick:FireServer(self.Idx)
+			OnLeftClick:Fire(self.Idx)
 		end
 	end, function()
 		if not self.Activated then
-			RightClick:FireServer(self.Idx)
+			OnRightClick:Fire(self.Idx)
 		end
 	end)
 
@@ -107,7 +104,7 @@ function TextPart._hide(self: TextPart)
 	self.Part.Parent = nil
 end
 
-function TextPart.ToggleFlag(self: TextPart, flagged: boolean)
+function TextPart.SetFlag(self: TextPart, flagged: boolean)
 	self.Flagged = flagged
 	if self.Flagged then
 		self.Label.Text = "*Flag*"
@@ -121,7 +118,7 @@ end
 Checks if this tile no longer provides information about nearby mines.
 
 Requirements:
-- Has correct number of flags nearby,
+- Has correct number of flags nearby
 - All nearby tiles are either activated or flags
 ]]
 function TextPart._canHide(self: TextPart)
