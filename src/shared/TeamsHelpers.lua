@@ -22,11 +22,6 @@ local function InitTeams()
 	TeamsHelpers._players.Name = "Playing"
 	TeamsHelpers._players.AutoAssignable = false
 	TeamsHelpers._players.TeamColor = BrickColor.Blue()
-
-	-- if there are players in game already
-	-- for _, player in Players:GetPlayers() do
-	-- 	player.Team = TeamsHelpers._spectators
-	-- end
 end
 
 function TeamsHelpers.GetSpectators(): Team
@@ -41,6 +36,14 @@ function TeamsHelpers.GetPlayers(): Team
 		error("PLAYERS is nil")
 	end
 	return TeamsHelpers._players
+end
+
+function TeamsHelpers.SetSpectator(player: Player)
+	player.Team = TeamsHelpers._spectators
+end
+
+function TeamsHelpers.SetPlayer(player: Player)
+	player.Team = TeamsHelpers._players
 end
 
 InitTeams()

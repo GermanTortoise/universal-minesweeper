@@ -8,6 +8,8 @@ local Players = game:GetService("Players")
 local Remote = require(shared.remotes)
 local Board = require(server.Board)
 local TeamsHelpers = require(shared.TeamsHelpers)
+local DataSave = require(server.DataSave)
+local Leaderboard = require(server.Leaderboard)
 
 local NewGame = Remote.getEvent("NewGame")
 local GameStarted = Remote.getEvent("GameStarted")
@@ -24,13 +26,39 @@ local Refresh = Remote.getBindableEvent("Refresh")
 local PLAYERS = TeamsHelpers.GetPlayers()
 local SPECTATORS = TeamsHelpers.GetSpectators()
 
-for _, player in Players:GetPlayers() do
-	player.Team = PLAYERS
+local function OnPlayerAdded(player: Player)
+	TeamsHelpers.SetSpectator(player)
+	Leaderboard.leaderboardSetup(player)
+	DataSave.InitData(player)
 end
-Players.PlayerAdded:Connect(function(Player)
-	if SPECTATORS then
-		Player.Team = SPECTATORS
+
+for _, player in Players:GetPlayers() do
+	task.spawn(OnPlayerAdded, player)
+end
+Players.PlayerAdded:Connect(function(player)
+	OnPlayerAdded(player)
+end)
+
+
+-- task.spawn(function()
+-- 	while task.wait(120) do
+-- 		for _, player in Players:GetPlayers() do
+-- 			task.spawn(function()
+-- 				DataSave.Save(player)
+-- 			end)
+-- 		end
+-- 	end
+-- end)
+
+Players.PlayerRemoving:Connect(DataSave.Save)
+
+game:BindToClose(function()
+	for _, player in Players:GetPlayers() do
+		task.spawn(function()
+			DataSave.Save(player)
+		end)
 	end
+	task.wait(3)
 end)
 
 task.wait(3) -- should match delay between rounds
@@ -51,7 +79,12 @@ while true do
 	end
 	GameStarted:FireAllClients()
 
-	Refresh.Event:Wait()
+	local victory = Refresh.Event:Wait()
+	if victory then
+		for _, player in PLAYERS:GetPlayers() do
+			Leaderboard.addWin(player)
+		end
+	end
 	print("finished game")
 	task.wait(3)
 	for _, player in PLAYERS:GetPlayers() do

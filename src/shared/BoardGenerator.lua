@@ -174,7 +174,7 @@ function MSmodule.getRandomShape(): { number }
 	local out = {}
 	-- 0 - 0.1: 1D
 	-- 0.1 - 0.6: 2D
-	-- 0.6 - 0.8: 3D
+	-- 0.6 - 0.9: 3D
 	-- 0.8 - 1: 4D
 	if switch > 0 then
 		table.insert(out, math.random(8, 20))

@@ -1,16 +1,16 @@
--- Make sure "Enable Studio Access To API Services" is on in Game Settings! (*OR IT WON'T WORK*) --
-local Players = game:GetService("Players")
 local DataStoreService = game:GetService("DataStoreService")
 local Saver = DataStoreService:GetDataStore("SaveLeaderstats")
 
-Players.PlayerAdded:Connect(function(player)
+local DataSave = {}
+
+function DataSave.InitData(player: Player)
 	local Data
 	local success, errormessage = pcall(function()
 		Data = Saver:GetAsync(tostring(player.UserId))
 	end)
 
 	if not success then
-		error(errormessage)
+		warn(errormessage)
 	end
 
 	if Data then
@@ -18,9 +18,9 @@ Players.PlayerAdded:Connect(function(player)
 			player:WaitForChild("leaderstats"):WaitForChild(i).Value = v
 		end
 	end
-end)
+end
 
-local function Save(player)
+function DataSave.Save(player: Player)
 	local SavedData = {}
 	for _, v in pairs(player.leaderstats:GetChildren()) do
 		SavedData[v.Name] = v.Value
@@ -31,14 +31,8 @@ local function Save(player)
 	end)
 	
 	if not success then
-		error(errormessage)
+		warn(errormessage)
 	end
 end
 
-Players.PlayerRemoving:Connect(Save)
-
-game:BindToClose(function()
-	for _, v in Players:GetPlayers() do
-		Save(v)
-	end
-end)
+return DataSave

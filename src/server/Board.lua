@@ -139,7 +139,7 @@ function Board._rightClick(self: Board, idx: number)
 	end
 end
 
-function Board.EndGame(self: Board, revealMines: boolean)
+function Board._endGame(self: Board, revealMines: boolean)
 	revealMines = revealMines or false
 	if self.GameEnded then
 		return
@@ -152,7 +152,7 @@ function Board.EndGame(self: Board, revealMines: boolean)
 		end
 	end
 	EndGame:FireAllClients(self.CurrentMove, revealMines)
-	Refresh:Fire()
+	Refresh:Fire(not revealMines)
 	task.wait(1)
 	self:Destroy()
 end
@@ -169,7 +169,7 @@ function Board._activateTile(self: Board, tile: Tile.Tile)
 			self:_activateTile(adj)
 		end
 	elseif tile.Value < 0 then
-		self:EndGame(true)
+		self:_endGame(true)
 	end
 	self:_checkVictory()
 end
@@ -194,7 +194,7 @@ function Board._checkVictory(self: Board)
 	end
 	-- print(activated)
 	if activated == self.totalNumTiles - self.Mines then
-		self:EndGame(false)
+		self:_endGame(false)
 	end
 end
 
