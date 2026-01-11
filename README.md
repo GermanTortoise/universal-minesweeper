@@ -1,5 +1,7 @@
 This is a rewrite of [Asleum's Moonsweeper](https://github.com/Asleum/moonsweeper) using different board generation logic and more modern OOP.
 
+Link to Roblox game: [nD Minesweeper](https://www.roblox.com/games/127801103149519/nD-Minesweeper)
+
 Universal Minesweeper generates Minesweeper games of any dimension.
 
 Normal Minesweeper games are 2D objects embedded in 2D space, where we look up/down and left/right for mines. If we think of a 2D game as one "layer" of tiles, we can stack these layers to bring the game into the third dimension. Now, we can look up/down, left/right, and in/out; one direction for each dimension in our 3-dimensional world.
