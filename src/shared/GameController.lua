@@ -15,7 +15,7 @@ local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
 
 local NewGame = Remote.getEvent("NewGame")
-local GameStarted = Remote.getEvent("GameStarted")
+local StartGame = Remote.getEvent("StartGame")
 local EndGame = Remote.getEvent("EndGame")
 local ResetGame = Remote.getEvent("ResetGame")
 local ActivateTextParts = Remote.getEvent("ActivateTextParts")
@@ -55,7 +55,7 @@ function GameController._listenStart(self: GameController)
 		self:_newGame(shape)
 	end)
 
-	GameStarted.OnClientEvent:Connect(function()
+	StartGame.OnClientEvent:Connect(function()
 		self:_enableInteraction()
 	end)
 

@@ -8,7 +8,10 @@ function ArrayStuff.DictLen(d: { [any]: any }): number
 	return count
 end
 
-function ArrayStuff.TableConcat(t1: { number }, t2: { number }): { number }
+--[[
+Concatenates array-like (no gaps) tables
+]]
+function ArrayStuff.TableConcat(t1: { any }, t2: { any }): { any }
 	for i = 1, #t2 do
 		t1[#t1 + 1] = t2[i]
 	end

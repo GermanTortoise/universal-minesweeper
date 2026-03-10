@@ -13,6 +13,7 @@ local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
 local BG = require(shared.BoardGenerator)
 local TeamsHelpers = require(shared.TeamsHelpers)
+local ArrayStuff = require(shared.ArrayStuff)
 
 local ToggleFlag = Remote.getEvent("ToggleFlag")
 local ActivateTextParts = Remote.getEvent("ActivateTextParts")
@@ -37,6 +38,7 @@ export type Board = setmetatable<{
 	CurrentMove: { { number } },
 	TotalProgress: { { number } },
 	NumberBoard: { number },
+	RevealMines: boolean,
 }, typeof(Board)>
 
 function Board.new(): Board
@@ -63,6 +65,7 @@ function Board.new(): Board
 		self.totalNumTiles *= v
 	end
 	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
+	self.RevealMines = false
 	self:_initBoard()
 	return self
 end
@@ -121,7 +124,6 @@ function Board._listenClicks(self: Board)
 end
 
 function Board._leftClick(self: Board, idx: number)
-	table.clear(self.CurrentMove)
 	local tile = self.Tiles[idx]
 	if tile.Activated then
 		self:_chord(tile)
@@ -129,7 +131,9 @@ function Board._leftClick(self: Board, idx: number)
 		self:_activateTile(tile)
 	end
 	if not self.GameEnded then
+		self.TotalProgress = ArrayStuff.TableConcat(self.TotalProgress, self.CurrentMove)
 		ActivateTextParts:FireAllClients(self.CurrentMove)
+		table.clear(self.CurrentMove)
 	end
 end
 
@@ -139,22 +143,21 @@ function Board._rightClick(self: Board, idx: number)
 	end
 end
 
-function Board._endGame(self: Board, revealMines: boolean)
-	revealMines = revealMines or false
+function Board._endGame(self: Board)
 	if self.GameEnded then
 		return
 	end
-	print("you finished the game: ", not revealMines, "good ly")
+	print("you finished the game: ", not self.RevealMines, "good ly")
 	self.GameEnded = true
 	for _, tile in self.Tiles do
-		if not tile.Activated and (tile.Value >= 0 or (tile.Value < 0 and revealMines)) then
+		if not tile.Activated and (tile.Value >= 0 or (tile.Value < 0 and self.RevealMines)) then
 			table.insert(self.CurrentMove, { tile.Idx, tile.Value })
 		end
 	end
-	EndGame:FireAllClients(self.CurrentMove, revealMines)
-	Refresh:Fire(not revealMines)
-	task.wait(1)
-	self:Destroy()
+	self.TotalProgress = ArrayStuff.TableConcat(self.TotalProgress, self.CurrentMove)
+	EndGame:FireAllClients(self.CurrentMove, self.RevealMines)
+	table.clear(self.CurrentMove)
+	Refresh:Fire(not self.RevealMines)
 end
 
 function Board._activateTile(self: Board, tile: Tile.Tile)
@@ -169,7 +172,8 @@ function Board._activateTile(self: Board, tile: Tile.Tile)
 			self:_activateTile(adj)
 		end
 	elseif tile.Value < 0 then
-		self:_endGame(true)
+		self.RevealMines = true
+		self:_endGame()
 	end
 	self:_checkVictory()
 end
@@ -185,16 +189,22 @@ function Board._chord(self: Board, tile: Tile.Tile)
 end
 
 function Board._checkVictory(self: Board)
-	-- print("checking")
 	local activated = 0
 	for _, tile in self.Tiles do
 		if tile.Activated then
 			activated += 1
 		end
 	end
-	-- print(activated)
 	if activated == self.totalNumTiles - self.Mines then
 		self:_endGame(false)
+	end
+end
+
+function Board.Onboard(self: Board, player: Player)
+	if self.GameEnded then
+		EndGame:FireClient(player, self.TotalProgress, self.RevealMines)
+	else
+		ActivateTextParts:FireClient(player, self.TotalProgress)
 	end
 end
 
