@@ -24,6 +24,7 @@ local OnLeftClick = Remote.getBindableEvent("OnLeftClick")
 local OnRightClick = Remote.getBindableEvent("OnRightClick")
 local ActivateTile = Remote.getEvent("ActivateTile")
 local OnFlag = Remote.getEvent("Flag")
+local ClientReady = Remote.getEvent("ClientReady")
 
 local player = Players.LocalPlayer
 local PLAYERS_TEAM = Teams:WaitForChild("Playing") :: Team
@@ -65,6 +66,7 @@ function GameController._listenStart(self: GameController)
 	ResetGame.OnClientEvent:Connect(function()
 		self:_reset()
 	end)
+	ClientReady:FireServer()
 end
 
 function GameController._newGame(self: GameController, shape: { number })
