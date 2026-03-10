@@ -1,4 +1,6 @@
---!strict
+local shared = game:GetService("ReplicatedStorage")
+
+local ArrayStuff = require(shared.ArrayStuff)
 
 local MSmodule = {}
 
@@ -98,13 +100,6 @@ function MSmodule.put(a: any, ind: { number }, v: number, increment: boolean) --
 	end
 end
 
-function MSmodule.TableConcat(t1: { number }, t2: { number }): { number }
-	for i = 1, #t2 do
-		t1[#t1 + 1] = t2[i]
-	end
-	return t1
-end
-
 function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }): { { number } }
 	-- gets nD indices of tiles around a tile (mine neighbors)
 	local nDIdx: { number }
@@ -146,7 +141,7 @@ function MSmodule.indexOfNearbyTiles(idx: number | { number }, shape: { number }
 			local tmp = dim + v
 			if min <= tmp and tmp <= max then
 				for _, subDim in subDims do
-					table.insert(out, MSmodule.TableConcat({ tmp }, subDim))
+					table.insert(out, ArrayStuff.TableConcat({ tmp }, subDim))
 				end
 			end
 		end
