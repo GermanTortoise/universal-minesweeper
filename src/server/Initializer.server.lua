@@ -35,7 +35,6 @@ local function OnPlayerAdded(player: Player)
 	TeamsHelpers.SetSpectator(player)
 	Leaderboard.leaderboardSetup(player)
 	DataSave.InitData(player)
-	ReadyPlayers[player] = false
 end
 local function Onboard(player: Player)
 	-- player joined as spectator mid game
