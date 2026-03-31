@@ -1,7 +1,5 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
-local client = game:GetService("StarterPlayer")
-local server = game:GetService("ServerScriptService")
 local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
 
@@ -10,6 +8,7 @@ local TextPart = require(shared.TextPart)
 local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
 local MIM = require(shared:WaitForChild("MouseInputsManager"))
+local Tile = require(shared.Tile)
 
 local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
@@ -59,7 +58,7 @@ function GameController._listenStart(self: GameController)
 		self:_enableInteraction()
 	end)
 
-	EndGame.OnClientEvent:Connect(function(tilesRevealed: { { number } }, revealed: boolean)
+	EndGame.OnClientEvent:Connect(function(tilesRevealed: { Tile.TileMove }, revealed: boolean)
 		self:_endGame(tilesRevealed, revealed)
 	end)
 
@@ -90,12 +89,9 @@ end
 
 -- receive updates from board
 function GameController._updateView(self: GameController)
-	-- TODO: make custom struct for tilesRevealed
-	local activate = ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { { number } })
+	local activate = ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { Tile.TileMove })
 		for _, tileInfo in tilesRevealed do
-			local idx = tileInfo[1]
-			local val = tileInfo[2]
-			self._textParts[idx]:Reveal(false, val)
+			self._textParts[tileInfo.Idx]:Reveal(false, tileInfo.Val)
 		end
 	end)
 
@@ -124,11 +120,9 @@ function GameController._enableInteraction(self: GameController)
 	self._maid:GiveTask(right)
 end
 
-function GameController._endGame(self: GameController, tilesRevealed: { { number } }, revealMines: boolean)
+function GameController._endGame(self: GameController, tilesRevealed: { Tile.TileMove }, revealMines: boolean)
 	for _, tileInfo in tilesRevealed do
-		local idx = tileInfo[1]
-		local val = tileInfo[2]
-		self._textParts[idx]:Reveal(revealMines, val)
+		self._textParts[tileInfo.Idx]:Reveal(revealMines, tileInfo.Val)
 	end
 	MIM.Stop()
 	for _, tile in self._textParts do

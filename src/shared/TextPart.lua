@@ -1,6 +1,5 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
-local client = game:GetService("StarterPlayer")
 
 local MIM = require(shared:WaitForChild("MouseInputsManager"))
 local Remote = require(shared.remotes)
@@ -78,7 +77,7 @@ function TextPart.UnregisterClick(self: TextPart)
 	return MIM.UnbindPartFromClick(self.Part)
 end
 
-function TextPart.Reveal(self: TextPart, revealMines, val)
+function TextPart.Reveal(self: TextPart, revealMines: boolean, val: number)
 	self.Val = val
 	self.Activated = true
 	if self.Val == 0 then

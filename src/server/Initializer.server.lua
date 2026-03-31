@@ -60,16 +60,6 @@ ClientReady.OnServerEvent:Connect(function(player)
 	Onboard(player)
 end)
 
--- task.spawn(function()
--- 	while task.wait(120) do
--- 		for _, player in Players:GetPlayers() do
--- 			task.spawn(function()
--- 				DataSave.Save(player)
--- 			end)
--- 		end
--- 	end
--- end)
-
 Players.PlayerRemoving:Connect(function(player)
 	DataSave.Save(player)
 	ReadyPlayers[player] = nil
@@ -119,8 +109,9 @@ while true do
 			Leaderboard.addWin(player)
 		end
 	end
+	task.wait(1)
 	board:Destroy()
-	task.wait(3)
+	task.wait(2)
 
 	-- clear board and move players back to spectators
 	-- players who join at this point are not onboarded

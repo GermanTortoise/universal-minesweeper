@@ -5,13 +5,11 @@
 	Model
 ]]
 local shared = game:GetService("ReplicatedStorage")
-local server = game:GetService("ServerScriptService")
 
-local Tile = require(server.Tile)
+local Tile = require(shared.Tile)
 local BoardGen = require(shared.BoardGenerator)
 local Remote = require(shared.remotes)
 local Maid = require(shared.Maid)
-local BG = require(shared.BoardGenerator)
 local TeamsHelpers = require(shared.TeamsHelpers)
 local ArrayStuff = require(shared.ArrayStuff)
 
@@ -30,63 +28,44 @@ Board.__index = Board
 export type Board = setmetatable<{
 	_maid: any,
 	Shape: { number },
-	Mines: number,
+	NumMines: number,
 	GameEnded: boolean,
 	FlagsCount: number,
 	Tiles: { Tile.Tile },
-	totalNumTiles: number,
-	CurrentMove: { { number } },
-	TotalProgress: { { number } },
-	NumberBoard: { number },
+	CurrentMove: { Tile.TileMove },
+	TotalProgress: { Tile.TileMove },
 	RevealMines: boolean,
+	FirstMoveMade: boolean,
 }, typeof(Board)>
 
 function Board.new(): Board
 	local self = setmetatable({}, Board)
 	self._maid = Maid.new()
-
-	self.Shape = BG.getRandomShape()
-	local mineMultiplier = math.random() / 5 + 0.9 -- 0.9 to 1.1
-	-- TODO: handle or make sure this doesn't cause more mines than there are tiles
+	-- self.Shape = BG.getRandomShape()
+	self.Shape = { 10, 10 }
+	local mineMultiplier = math.random() / 5 + 0.9 -- [0.9, 1.1]
 	local totalNumTiles = 1
 	for _, dim in self.Shape do
 		totalNumTiles *= dim
 	end
-
-	self.Mines = math.floor(mineMultiplier * DENSITIES[#self.Shape] * totalNumTiles)
-
-	self.GameEnded = false
+	self.NumMines = math.floor(mineMultiplier * DENSITIES[#self.Shape] * totalNumTiles)
 	self.FlagsCount = 0
 	self.Tiles = {}
-	self.CurrentMove = {} -- TODO: optimize this
+	local numberBoard = BoardGen.new(self.Shape, self.NumMines)
+	for idx, val in numberBoard do
+		self.Tiles[idx] = { Activated = false, Flagged = false, Value = val }
+	end
+	self.CurrentMove = {}
 	self.TotalProgress = {}
-	self.totalNumTiles = 1
-	for _, v in self.Shape do
-		self.totalNumTiles *= v
-	end
-	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
+	self.GameEnded = false
 	self.RevealMines = false
-	self:_initBoard()
-	return self
-end
-
-function Board._initBoard(self: Board)
-	self.NumberBoard = BoardGen.new(self.Shape, self.Mines)
-	for idx, val in self.NumberBoard do
-		self.Tiles[idx] = Tile.new(val, idx)
-	end
-	for idx, tile in self.Tiles do
-		local nearbyTiles = BoardGen.indexOfNearbyTiles(idx, self.Shape)
-		for _, tileIdx in nearbyTiles do
-			table.insert(tile.NearbyTiles, self.Tiles[BoardGen.nDToFlatIndex(tileIdx, self.Shape)])
-		end
-	end
+	self.FirstMoveMade = false
 	self:_listenClicks()
+	return self
 end
 
 function Board._listenClicks(self: Board)
 	local left = ActivateTile.OnServerEvent:Connect(function(player, idx: number)
-		print("activated")
 		if player.Team ~= TeamsHelpers.GetPlayers() then
 			warn(string.format("%s triggered ActivateTile as spectator", player.Name))
 			return
@@ -103,7 +82,6 @@ function Board._listenClicks(self: Board)
 	end)
 
 	local right = Flag.OnServerEvent:Connect(function(player, idx: number)
-		print("flagged")
 		if player.Team ~= TeamsHelpers.GetPlayers() then
 			warn(string.format("%s triggered Flag as spectator", player.Name))
 			return
@@ -125,10 +103,21 @@ end
 
 function Board._leftClick(self: Board, idx: number)
 	local tile = self.Tiles[idx]
+	if not self.FirstMoveMade and tile.Value < 0 then
+		-- handle revealing a mine on the first move
+		local safeIdx = math.random(#self.Tiles)
+		while self.Tiles[safeIdx].Value < 0 do
+			safeIdx = math.random(#self.Tiles)
+		end
+		tile = self.Tiles[safeIdx]
+		self.Tiles[safeIdx] = self.Tiles[idx]
+		self.Tiles[idx] = tile
+	end
+	self.FirstMoveMade = true
 	if tile.Activated then
-		self:_chord(tile)
+		self:_chord(idx)
 	else
-		self:_activateTile(tile)
+		self:_activateTile(idx)
 	end
 	if not self.GameEnded then
 		self.TotalProgress = ArrayStuff.TableConcat(self.TotalProgress, self.CurrentMove)
@@ -139,7 +128,7 @@ end
 
 function Board._rightClick(self: Board, idx: number)
 	if not self.Tiles[idx].Activated then
-		ToggleFlag:FireAllClients(idx, self.Tiles[idx]:ToggleFlag())
+		ToggleFlag:FireAllClients(idx, self:ToggleFlag(idx))
 	end
 end
 
@@ -149,9 +138,9 @@ function Board._endGame(self: Board)
 	end
 	print("you finished the game: ", not self.RevealMines, "good ly")
 	self.GameEnded = true
-	for _, tile in self.Tiles do
+	for idx, tile in self.Tiles do
 		if not tile.Activated and (tile.Value >= 0 or (tile.Value < 0 and self.RevealMines)) then
-			table.insert(self.CurrentMove, { tile.Idx, tile.Value })
+			table.insert(self.CurrentMove, { Idx = idx, Val = tile.Value })
 		end
 	end
 	self.TotalProgress = ArrayStuff.TableConcat(self.TotalProgress, self.CurrentMove)
@@ -160,16 +149,17 @@ function Board._endGame(self: Board)
 	Refresh:Fire(not self.RevealMines)
 end
 
-function Board._activateTile(self: Board, tile: Tile.Tile)
+function Board._activateTile(self: Board, idx: number)
 	-- TODO: figure out revealing 0's when there are misplaced flags
+	local tile: Tile.Tile = self.Tiles[idx]
 	if tile.Activated or tile.Flagged then
 		return
 	end
 	tile.Activated = true
-	table.insert(self.CurrentMove, { tile.Idx, tile.Value })
+	table.insert(self.CurrentMove, { Idx = idx, Val = tile.Value })
 	if tile.Value == 0 then
-		for _, adj in tile.NearbyTiles do
-			self:_activateTile(adj)
+		for _, tileIdx in self:GetNearbyTiles(idx) do
+			self:_activateTile(tileIdx)
 		end
 	elseif tile.Value < 0 then
 		self.RevealMines = true
@@ -178,10 +168,12 @@ function Board._activateTile(self: Board, tile: Tile.Tile)
 	self:_checkVictory()
 end
 
-function Board._chord(self: Board, tile: Tile.Tile)
-	if tile:HasCorrectNumberFlags() then
-		for _, adj in tile.NearbyTiles do
-			if not adj.Flagged then
+function Board._chord(self: Board, idx: number)
+	if self:HasCorrectNumberFlags(idx) then
+		local nearbyTiles = self:GetNearbyTiles(idx)
+		for _, adj in nearbyTiles do
+			local adjTile = self.Tiles[adj]
+			if not adjTile.Flagged and not adjTile.Activated then
 				self:_activateTile(adj)
 			end
 		end
@@ -195,9 +187,38 @@ function Board._checkVictory(self: Board)
 			activated += 1
 		end
 	end
-	if activated == self.totalNumTiles - self.Mines then
+	if activated == #self.Tiles - self.NumMines then
 		self:_endGame(false)
 	end
+end
+
+function Board.ToggleFlag(self: Board, idx: number): boolean
+	local tile = self.Tiles[idx]
+	if tile.Activated then
+		return false
+	end
+	tile.Flagged = not tile.Flagged
+	return tile.Flagged
+end
+
+function Board.GetNearbyTiles(self: Board, idx: number): { number }
+	local nearbyTilesIdxs = BoardGen.indexOfNearbyTiles(idx, self.Shape)
+	local nearbyTiles = {}
+	for _, tileIdx in nearbyTilesIdxs do
+		table.insert(nearbyTiles, BoardGen.nDToFlatIndex(tileIdx, self.Shape))
+	end
+	return nearbyTiles
+end
+
+function Board.HasCorrectNumberFlags(self: Board, idx: number)
+	local nearbyFlags = 0
+	for _, adj in self:GetNearbyTiles(idx) do
+		local tile = self.Tiles[adj]
+		if tile.Flagged then
+			nearbyFlags += 1
+		end
+	end
+	return self.Tiles[idx].Value == nearbyFlags
 end
 
 function Board.Onboard(self: Board, player: Player)
@@ -209,14 +230,10 @@ function Board.Onboard(self: Board, player: Player)
 end
 
 function Board.UpdateMinesCounter(_self: Board)
-	-- self.MinesCounter.Label.Text = "Mines left: " .. tostring(self.Mines - self.FlagsCount)
 	-- TODO: this
 end
 
 function Board.Destroy(self: Board)
-	for _, tile in self.Tiles do
-		table.clear(tile.NearbyTiles)
-	end
 	table.clear(self.Tiles)
 	self._maid:Destroy()
 end
