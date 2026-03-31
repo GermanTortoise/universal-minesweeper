@@ -80,6 +80,7 @@ end
 function TextPart.Reveal(self: TextPart, revealMines: boolean, val: number)
 	self.Val = val
 	self.Activated = true
+	self.Part.Transparency = 0
 	if self.Val == 0 then
 		self:UnregisterClick()
 		self:_hide()

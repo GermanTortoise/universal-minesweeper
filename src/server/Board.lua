@@ -41,8 +41,7 @@ export type Board = setmetatable<{
 function Board.new(): Board
 	local self = setmetatable({}, Board)
 	self._maid = Maid.new()
-	-- self.Shape = BG.getRandomShape()
-	self.Shape = { 10, 10 }
+	self.Shape = BoardGen.getRandomShape()
 	local mineMultiplier = math.random() / 5 + 0.9 -- [0.9, 1.1]
 	local totalNumTiles = 1
 	for _, dim in self.Shape do

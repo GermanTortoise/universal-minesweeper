@@ -108,6 +108,8 @@ function GameController._enableInteraction(self: GameController)
 	MIM.Start()
 	local left = OnLeftClick.Event:Connect(function(idx: number)
 		if not self._textParts[idx].Flagged and player.Team == PLAYERS_TEAM then
+			local textPart = self._textParts[idx]
+			textPart.Part.Transparency = 0.3
 			ActivateTile:FireServer(idx)
 		end
 	end)
