@@ -7,7 +7,7 @@ local Teams = game:GetService("Teams")
 local TextChatService = game:GetService("TextChatService")
 
 local BG = require(shared.lib.BoardGenerator)
-local TextPart = require(client.TextPart)
+local Cell = require(client.Cell)
 local Remote = require(shared.lib.remotes)
 local Maid = require(shared.lib.Maid)
 local MIM = require(client:WaitForChild("MouseInputsManager"))
@@ -39,13 +39,13 @@ GameController.__index = GameController
 
 export type GameController = setmetatable<{
 	_maid: any,
-	_textParts: { TextPart.TextPart },
+	_cells: { Cell.Cell },
 }, typeof(GameController)>
 
 function GameController.new()
 	local self = setmetatable({}, GameController)
 	self._maid = Maid.new()
-	self._textParts = {} :: { TextPart.TextPart } -- this cast is necessary for type checking
+	self._cells = {} :: { Cell.Cell } -- this cast is necessary for type checking
 
 	self:_updateView()
 	self:_listenStart()
@@ -55,7 +55,7 @@ end
 
 function GameController._listenStart(self: GameController)
 	NewGame.OnClientEvent:Connect(function(shape: { number })
-		-- assert(#self._textParts == 0, "there are still textparts")
+		-- assert(#self._cells == 0, "there are still textparts")
 		self:_newGame(shape)
 	end)
 
@@ -81,12 +81,12 @@ function GameController._newGame(self: GameController, shape: { number })
 	local origin = Vector3.new(0, 0, 0)
 	for idx = 1, totalNumTextParts do
 		local tilePos = self:_getBoardRelativePos(idx, shape)
-		self._textParts[idx] = TextPart.new(TILE_SIZE, CFrame.new(origin + tilePos * TILE_SPACING), idx)
+		self._cells[idx] = Cell.new(TILE_SIZE, CFrame.new(origin + tilePos * TILE_SPACING), idx)
 	end
-	for _, tile in self._textParts do
+	for _, tile in self._cells do
 		local nearbyTiles = BG.indexOfNearbyTiles(tile.Idx, shape)
 		for _, idx in nearbyTiles do
-			table.insert(tile.NearbyTiles, self._textParts[BG.nDToFlatIndex(idx, shape)])
+			table.insert(tile.NearbyTiles, self._cells[BG.nDToFlatIndex(idx, shape)])
 		end
 	end
 	self:_updateView()
@@ -96,12 +96,12 @@ end
 function GameController._updateView(self: GameController)
 	local activate = ActivateTextParts.OnClientEvent:Connect(function(tilesRevealed: { Tile.TileMove })
 		for _, tileInfo in tilesRevealed do
-			self._textParts[tileInfo.Idx]:Reveal(false, tileInfo.Val)
+			self._cells[tileInfo.Idx]:Reveal(false, tileInfo.Val)
 		end
 	end)
 
 	local toggleFlag = ToggleFlag.OnClientEvent:Connect(function(textPart: number, flagged: boolean)
-		self._textParts[textPart]:SetFlag(flagged)
+		self._cells[textPart]:SetFlag(flagged)
 	end)
 
 	self._maid:GiveTask(activate)
@@ -112,14 +112,14 @@ end
 function GameController._enableInteraction(self: GameController)
 	MIM.Start()
 	local left = OnLeftClick.Event:Connect(function(idx: number)
-		if not self._textParts[idx].Flagged and player.Team == PLAYERS_TEAM then
-			local textPart = self._textParts[idx]
-			textPart.Part.Transparency = 0.3
+		if not self._cells[idx].Flagged and player.Team == PLAYERS_TEAM then
+			local cell = self._cells[idx]
+			cell.TextPart.Part.Transparency = 0.3
 			ActivateTile:FireServer(idx)
 		end
 	end)
 	local right = OnRightClick.Event:Connect(function(idx: number)
-		if not self._textParts[idx].Activated and player.Team == PLAYERS_TEAM then
+		if not self._cells[idx].Activated and player.Team == PLAYERS_TEAM then
 			OnFlag:FireServer(idx)
 		end
 	end)
@@ -134,10 +134,10 @@ function GameController._endGame(
 	elapsed: number
 )
 	for _, tileInfo in tilesRevealed do
-		self._textParts[tileInfo.Idx]:Reveal(revealMines, tileInfo.Val)
+		self._cells[tileInfo.Idx]:Reveal(revealMines, tileInfo.Val)
 	end
 	MIM.Stop()
-	for _, tile in self._textParts do
+	for _, tile in self._cells do
 		if tile.Val ~= 0 then
 			tile:_show()
 		end
@@ -149,10 +149,10 @@ function GameController._endGame(
 end
 
 function GameController._reset(self: GameController)
-	for _, tile in self._textParts do
+	for _, tile in self._cells do
 		tile:Destroy()
 	end
-	table.clear(self._textParts)
+	table.clear(self._cells)
 end
 
 function GameController._getBoardRelativePos(_self: GameController, pos: number, shape: { number }): Vector3
