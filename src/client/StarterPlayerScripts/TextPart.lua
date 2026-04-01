@@ -1,9 +1,10 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
+local client = game:GetService("StarterPlayer").StarterPlayerScripts
 
-local MIM = require(shared:WaitForChild("MouseInputsManager"))
-local Remote = require(shared.remotes)
-local Maid = require(shared.Maid)
+local MIM = require(client:WaitForChild("MouseInputsManager"))
+local Remote = require(shared.lib.remotes)
+local Maid = require(shared.lib.Maid)
 
 local OnLeftClick = Remote.getBindableEvent("OnLeftClick")
 local OnRightClick = Remote.getBindableEvent("OnRightClick")

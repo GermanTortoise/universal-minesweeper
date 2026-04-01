@@ -1,15 +1,17 @@
 --!strict
 local shared = game:GetService("ReplicatedStorage")
+local client = game:GetService("StarterPlayer").StarterPlayerScripts
+
 local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
 local TextChatService = game:GetService("TextChatService")
 
-local BG = require(shared.BoardGenerator)
-local TextPart = require(shared.TextPart)
-local Remote = require(shared.remotes)
-local Maid = require(shared.Maid)
-local MIM = require(shared:WaitForChild("MouseInputsManager"))
-local Tile = require(shared.Tile)
+local BG = require(shared.lib.BoardGenerator)
+local TextPart = require(client.TextPart)
+local Remote = require(shared.lib.remotes)
+local Maid = require(shared.lib.Maid)
+local MIM = require(client:WaitForChild("MouseInputsManager"))
+local Tile = require(shared.types.Tile)
 
 local TILE_SPACING = 4
 local TILE_SIZE = Vector3.new(2.5, 2.5, 2.5)
@@ -29,8 +31,8 @@ local ClientReady = Remote.getEvent("ClientReady")
 local player = Players.LocalPlayer
 local PLAYERS_TEAM = Teams:WaitForChild("Playing") :: Team
 local SPECTATORS_TEAM = Teams:WaitForChild("Spectators") :: Team
-
-local generalChannel: TextChannel = TextChatService:WaitForChild("TextChannels").RBXGeneral
+local textChannel = TextChatService:WaitForChild("TextChannels") :: any
+local generalChannel: TextChannel = textChannel.RBXGeneral
 
 local GameController = {}
 GameController.__index = GameController

@@ -4,8 +4,8 @@ local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local shared = game:GetService("ReplicatedStorage")
 
-local AS = require(shared.ArrayStuff)
-local Maid = require(shared.Maid)
+local AS = require(shared.lib.ArrayStuff)
+local Maid = require(shared.lib.Maid)
 
 type ClickHandler = () -> ()
 

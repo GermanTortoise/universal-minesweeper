@@ -1,17 +1,15 @@
---!strict
-
 --[[
 	A game instance
 	Model
 ]]
 local shared = game:GetService("ReplicatedStorage")
 
-local Tile = require(shared.Tile)
-local BoardGen = require(shared.BoardGenerator)
-local Remote = require(shared.remotes)
-local Maid = require(shared.Maid)
-local TeamsHelpers = require(shared.TeamsHelpers)
-local ArrayStuff = require(shared.ArrayStuff)
+local Tile = require(shared.types.Tile)
+local BoardGen = require(shared.lib.BoardGenerator)
+local Remote = require(shared.lib.remotes)
+local Maid = require(shared.lib.Maid)
+local TeamsHelpers = require(shared.lib.TeamsHelpers)
+local ArrayStuff = require(shared.lib.ArrayStuff)
 
 local ToggleFlag = Remote.getEvent("ToggleFlag")
 local ActivateTextParts = Remote.getEvent("ActivateTextParts")

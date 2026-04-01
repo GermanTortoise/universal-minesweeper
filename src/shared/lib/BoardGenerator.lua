@@ -1,6 +1,6 @@
 local shared = game:GetService("ReplicatedStorage")
 
-local ArrayStuff = require(shared.ArrayStuff)
+local ArrayStuff = require(shared.lib.ArrayStuff)
 
 local MSmodule = {}
 

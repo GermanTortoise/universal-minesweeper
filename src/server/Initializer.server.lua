@@ -1,14 +1,14 @@
 local shared = game:GetService("ReplicatedStorage")
 local server = game:GetService("ServerScriptService")
-local client = game:GetService("StarterPlayer")
 
 local Players = game:GetService("Players")
 
-local Remote = require(shared.remotes)
+local Remote = require(shared.lib.remotes)
 local Board = require(server.Board)
-local TeamsHelpers = require(shared.TeamsHelpers)
+local TeamsHelpers = require(shared.lib.TeamsHelpers)
 local DataSave = require(server.DataSave)
 local Leaderboard = require(server.Leaderboard)
+-- local PlayerSettings = require(server.PlayerSettings)
 
 local NewGame = Remote.getEvent("NewGame")
 local StartGame = Remote.getEvent("StartGame")
@@ -35,6 +35,7 @@ local ReadyPlayers: { [Player]: boolean } = {}
 local function OnPlayerAdded(player: Player)
 	TeamsHelpers.SetSpectator(player)
 	Leaderboard.leaderboardSetup(player)
+	-- PlayerSettings.init(player)
 	DataSave.InitData(player)
 end
 local function Onboard(player: Player)
