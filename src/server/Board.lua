@@ -36,6 +36,7 @@ export type Board = setmetatable<{
 	TotalProgress: { Tile.TileMove },
 	RevealMines: boolean,
 	FirstMoveMade: boolean,
+	StartTime: number,
 }, typeof(Board)>
 
 function Board.new(): Board
@@ -59,6 +60,7 @@ function Board.new(): Board
 	self.GameEnded = false
 	self.RevealMines = false
 	self.FirstMoveMade = false
+	self.StartTime = os.clock() + 2
 	self:_listenClicks()
 	return self
 end
@@ -135,7 +137,6 @@ function Board._endGame(self: Board)
 	if self.GameEnded then
 		return
 	end
-	print("you finished the game: ", not self.RevealMines, "good ly")
 	self.GameEnded = true
 	for idx, tile in self.Tiles do
 		if not tile.Activated and (tile.Value >= 0 or (tile.Value < 0 and self.RevealMines)) then
@@ -143,7 +144,7 @@ function Board._endGame(self: Board)
 		end
 	end
 	self.TotalProgress = ArrayStuff.TableConcat(self.TotalProgress, self.CurrentMove)
-	EndGame:FireAllClients(self.CurrentMove, self.RevealMines)
+	EndGame:FireAllClients(self.CurrentMove, self.RevealMines, os.clock() - self.StartTime)
 	table.clear(self.CurrentMove)
 	Refresh:Fire(not self.RevealMines)
 end

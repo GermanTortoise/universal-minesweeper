@@ -24,6 +24,7 @@ local ClientReady = Remote.getEvent("ClientReady")
 local PLAYERS = TeamsHelpers.GetPlayers()
 local SPECTATORS = TeamsHelpers.GetSpectators()
 
+
 type GameStates = "Loading" | "Playing" | "Intermission"
 local GameState: GameStates = "Intermission"
 
@@ -81,7 +82,6 @@ while true do
 	-- create board and replicate it to spectators
 	-- all players are spectators at this point
 	-- NewGame for players who are already joined and loaded
-	print("Loading")
 	board = Board.new()
 	repeat
 		task.wait()
@@ -93,11 +93,10 @@ while true do
 	end
 	GameState = "Loading"
 	-- Onboard for players who load after this point
-	task.wait(5)
+	task.wait(2)
 
 	-- move spectators to playing
 	-- players who join at this point stay as spectators
-	print("Playing")
 	for _, player in SPECTATORS:GetPlayers() do
 		player.Team = PLAYERS
 	end
@@ -115,7 +114,6 @@ while true do
 
 	-- clear board and move players back to spectators
 	-- players who join at this point are not onboarded
-	print("finished game")
 	GameState = "Intermission"
 	for _, player in PLAYERS:GetPlayers() do
 		player.Team = SPECTATORS

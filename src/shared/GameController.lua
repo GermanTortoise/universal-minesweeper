@@ -2,6 +2,7 @@
 local shared = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 local Teams = game:GetService("Teams")
+local TextChatService = game:GetService("TextChatService")
 
 local BG = require(shared.BoardGenerator)
 local TextPart = require(shared.TextPart)
@@ -28,6 +29,8 @@ local ClientReady = Remote.getEvent("ClientReady")
 local player = Players.LocalPlayer
 local PLAYERS_TEAM = Teams:WaitForChild("Playing") :: Team
 local SPECTATORS_TEAM = Teams:WaitForChild("Spectators") :: Team
+
+local generalChannel: TextChannel = TextChatService:WaitForChild("TextChannels").RBXGeneral
 
 local GameController = {}
 GameController.__index = GameController
@@ -58,8 +61,8 @@ function GameController._listenStart(self: GameController)
 		self:_enableInteraction()
 	end)
 
-	EndGame.OnClientEvent:Connect(function(tilesRevealed: { Tile.TileMove }, revealed: boolean)
-		self:_endGame(tilesRevealed, revealed)
+	EndGame.OnClientEvent:Connect(function(tilesRevealed: { Tile.TileMove }, revealed: boolean, elapsed: number)
+		self:_endGame(tilesRevealed, revealed, elapsed)
 	end)
 
 	ResetGame.OnClientEvent:Connect(function()
@@ -122,7 +125,12 @@ function GameController._enableInteraction(self: GameController)
 	self._maid:GiveTask(right)
 end
 
-function GameController._endGame(self: GameController, tilesRevealed: { Tile.TileMove }, revealMines: boolean)
+function GameController._endGame(
+	self: GameController,
+	tilesRevealed: { Tile.TileMove },
+	revealMines: boolean,
+	elapsed: number
+)
 	for _, tileInfo in tilesRevealed do
 		self._textParts[tileInfo.Idx]:Reveal(revealMines, tileInfo.Val)
 	end
@@ -133,6 +141,9 @@ function GameController._endGame(self: GameController, tilesRevealed: { Tile.Til
 		end
 	end
 	self._maid:Destroy()
+	generalChannel:DisplaySystemMessage(
+		string.format("you finished the game %s good ly in %.2f seconds", tostring(not revealMines), elapsed)
+	)
 end
 
 function GameController._reset(self: GameController)
